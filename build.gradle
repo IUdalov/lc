@@ -1,0 +1,71 @@
+apply plugin: "cpp"
+
+model {
+    buildTypes {
+        debug
+        release
+    }
+    components {
+        lc(NativeLibrarySpec) {
+            sources {
+                cpp {
+                    exportedHeaders {
+                        srcDirs "src/lib"
+                        srcDirs "src/lib/include"
+                        include "**/*.h"
+                    }
+                    source {
+                        srcDirs "src/lib"
+                        include "**/*.cpp"
+                    }
+                }
+            }
+        }
+        test(NativeExecutableSpec) {
+            sources {
+                cpp {
+                    exportedHeaders {
+                        srcDirs "src/test"
+                        include "**/*.h"
+                    }
+                    source {
+                        srcDirs "src/test"
+                        include "**/*.cpp"
+                    }
+                }
+            }
+            binaries {
+                all {
+                    lib library: "lc", linkage: 'static'
+                }
+            }
+        }
+    }
+    binaries {
+        all {
+            cppCompiler.args "-std=c++11"
+            if (it.buildType == buildTypes.debug) {
+                cppCompiler.args "-O0", "-g"
+                cppCompiler.args "-Wall", "-Wextra", "-Wpedantic"
+            } else {
+                cppCompiler.define "NDEBUG"
+                cppCompiler.args "-O3"
+            }
+        }
+    }
+    tasks {
+        def buildTypeName = (System.env.DEBUG ? buildTypes.debug : buildTypes.release).name.capitalize()
+        lib(Task) {
+            dependsOn "lc${buildTypeName}SharedLibrary"
+        }
+        test(Task) {
+            dependsOn "installTest${buildTypeName}Executable"
+        }
+    }
+}
+
+
+task generateWrapper(type: Wrapper) {
+   gradleVersion = '2.10'
+}
+
