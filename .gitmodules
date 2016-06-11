@@ -1,0 +1,6 @@
+[submodule "third-party/libsvm"]
+	path = third-party/libsvm
+	url = git@github.com:cjlin1/libsvm.git
+[submodule "third-party/test"]
+	path = third-party/test
+	url = git@github.com:boostorg/test.git
