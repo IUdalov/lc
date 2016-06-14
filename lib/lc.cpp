@@ -1,8 +1,8 @@
 #include "lc.h"
 
 #include <math.h>
-
 #include <exception>
+#include <fstream>
 
 const size_t DEFAULT_MAXIMUM_STEPS = 10000;
 const double DEFAULT_PRECISION = 0.00000001;
@@ -15,10 +15,10 @@ namespace lc {
           steps(0),
           c(-1),
           precision(0),
-          name('%'),
           errorsBefore(-1),
           errorsAfter(-1),
-          w({}) {
+          w({}),
+          oldW({}) {
     }
 
     Model::Model()
@@ -32,7 +32,7 @@ namespace lc {
     Model::~Model() {
     }
 
-    void Model::setLossFunction(const Function& _lf, const Function& _diff) {
+    void Model::setLossFunction(const Function& _lf, const Function& _diff) noexcept {
         lf = _lf;
         diff = _diff;
     }
@@ -42,14 +42,14 @@ namespace lc {
         y = classes_;
     }
 
-    void Model::setC(double c_) {
+    void Model::setC(double c_) noexcept {
         c = c_;
     }
 
-    void Model::setMaximumStepsNumber(size_t n) {
+    void Model::setMaximumStepsNumber(size_t n) noexcept {
         maximumSteps = n;
     }
-    void Model::setPrecision(double p) {
+    void Model::setPrecision(double p) noexcept {
         precision = p;
     }
 
@@ -133,7 +133,7 @@ namespace lc {
     // TODO: check?
     // Probably a lot of errors
     void Model::bayes() {
-        if (x.empty() || y.empty()) {
+        if (x.empty() || y.empty() || x.size() != y.size()) {
             throw std::runtime_error("Model was not configured");
         }
         size_t n = x[0].size();
@@ -199,6 +199,33 @@ namespace lc {
                 double diffI = diff(-margins[i]);
                 w[k] += (-c) * diffI * x[i][k] * y[i];
             }
+        }
+    }
+
+    void Model::save(const std::string& path) {
+        if (w.empty()) {
+            throw std::runtime_error("Model was not configured");
+        }
+        std::ofstream out;
+        out.open(path);
+
+        for(auto it : w) {
+            out << it << std::endl;
+        }
+
+        out.close();
+    }
+
+    void Model::load(const std::string& path) {
+        w.clear();
+        std::ifstream modelFile(path);
+        if (!modelFile) {
+            throw std::runtime_error("File " + path + " not found!");
+        }
+        std::string line;
+        while(std::getline(modelFile, line)) {
+            if (line == "\n") continue;
+            w.push_back(std::stod(line));
         }
     }
 }

@@ -20,10 +20,10 @@ namespace lc {
         size_t steps;
         double c;
         double precision;
-        char name;
         double errorsBefore;
         double errorsAfter;
         Vector w;
+        Vector oldW;
 
         Info();
     };
@@ -35,13 +35,16 @@ namespace lc {
 
         void setData(const Objects& objects_, const Vector& classes_);
 
-        void setLossFunction(const Function& _lf, const Function& _diff);
-        void setC(double c);
-        void setMaximumStepsNumber(size_t steps);
-        void setPrecision(double precision);
+        void setLossFunction(const Function& _lf, const Function& _diff) noexcept;
+        void setC(double c) noexcept;
+        void setMaximumStepsNumber(size_t steps) noexcept;
+        void setPrecision(double precision) noexcept;
 
         Info train(bool skipBayes = false);
         int predict(const Vector&) const;
+
+        void save(const std::string& path);
+        void load(const std::string& path);
 
         void bayes();
         void toMargins();

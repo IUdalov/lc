@@ -9,6 +9,14 @@ int readCSVFile(const std::string& path,
                 lc::Objects& data,
                 lc::Vector& classes);
 
+int readSVMFile(const std::string& path,
+                lc::Objects& data,
+                lc::Vector& classes);
+
+int writeSVMFile(const std::string& path,
+                 const lc::Objects& data,
+                 const lc::Vector& classes);
+
 void addDim(lc::Objects& data);
 
 double checkData(

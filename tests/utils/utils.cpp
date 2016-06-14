@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <string>
 #include <fstream>
 #include <random>
 
@@ -42,6 +43,9 @@ std::vector<std::string> csvDatasets() {
 int readCSVFile(const std::string& path, Objects& data, Vector& classes) {
     std::ifstream csvFile(path);
     std::string line;
+    if (!csvFile) {
+        throw std::runtime_error("File " + path + "not found!");
+    }
     while(std::getline(csvFile, line)) {
         std::string temp = "";
         Vector node;
@@ -68,6 +72,121 @@ int readCSVFile(const std::string& path, Objects& data, Vector& classes) {
         }
     }
     return 0;
+}
+
+size_t guessTaskSpace(const std::string& path) {
+    std::ifstream svmFile(path);
+    std::string line;
+    if (!svmFile) {
+        throw std::runtime_error("File " + path + "not found!");
+    }
+    size_t number = 0;
+    while(std::getline(svmFile, line)) {
+        if (line == "\n") {
+            continue;
+        }
+        line.erase(0, 3);
+        std::string acc;
+        for(size_t i = 0; i < line.size(); i++) {
+            switch(line[i]) {
+                case '\n':
+                case ' ':
+                    acc.clear();
+                    break;
+                case ':': {
+                        size_t tmp = std::stoi(acc);
+                        number = number < tmp ? tmp : number;
+                        acc.clear();
+                    }
+                    break;
+                default:
+                    acc.push_back(line[i]);
+                    break;
+            }
+        }
+    }
+    if (number == 0) {
+        throw std::runtime_error("Format error at " + path);
+    }
+    return number;
+}
+
+int readSVMFile(const std::string& path, lc::Objects& data, lc::Vector& classes) {
+    data.clear();
+    classes.clear();
+
+    size_t taskSize = guessTaskSpace(path);
+    std::ifstream svmFile(path);
+    std::string line;
+    if (!svmFile) {
+        throw std::runtime_error("File " + path + "not found!");
+    }
+    while(std::getline(svmFile, line)) {
+        if (line == "\n") {
+            continue;
+        }
+        int c = 0;
+        switch(line[0]) {
+            case '-': c = -1; break;
+            case '+': c =  1; break;
+            default: return 1;
+        }
+        line.erase(0, 3);
+        Vector o(taskSize, NAN);
+        std::string acc;
+        size_t number;
+        for(size_t i = 0; i < line.size(); i++) {
+            switch(line[i]) {
+                case '\n':
+                case ' ':
+                    o[number - 1] = std::stod(acc);
+                    acc.clear();
+                    break;
+                case ':':
+                    number = std::stoi(acc);
+                    acc.clear();
+                    break;
+                default:
+                    acc.push_back(line[i]);
+                    break;
+            }
+        }
+        bool isFull = true;
+        for(auto i = 0; i < o.size(); i++)
+            if (o[i] != o[i]) {
+                isFull = false; break;
+            }
+        if (isFull) {
+            data.push_back(o);
+            classes.push_back(c);
+        }
+    }
+    return 0;
+}
+
+int writeSVMFile(const std::string& path,
+                 const lc::Objects& data,
+                 const lc::Vector& classes) {
+    if (data.size() != classes.size()) {
+        return 1;
+    }
+
+    std::ofstream out;
+    out.open(path);
+    for(size_t i = 0; i < data.size(); i++) {
+        if (classes[i] == 1) {
+            out << "+1 ";
+        } else {
+            out << "-1 ";
+        }
+        for(size_t j = 0; j < data[i].size(); j++) {
+            out << (j + 1) << ":" << data[i][j] << " ";
+        }
+        out << std::endl;
+    }
+
+    out.close();
+    return  0;
 }
 
 void addDim(lc::Objects& data) {
@@ -125,7 +244,6 @@ void logInfoToFile(std::vector<Info> stats, std::string path) {
         log << "\tsteps:        " << i.steps << std::endl;
         log << "\tprecision:    " << i.precision << std::endl;
         log << "\tc:            " << i.c << std::endl;
-        log << "\tname:         " << i.name << std::endl;
         log << "\terrorsBefore: " << i.errorsBefore << std::endl;
         log << "\terrorsAfter:  " << i.errorsAfter << std::endl;
         log << "\tw:            "; for(auto wi : i.w) log << wi << ", "; log << std::endl;

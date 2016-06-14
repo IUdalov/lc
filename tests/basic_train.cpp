@@ -4,8 +4,6 @@
 #include <utils/utils.h>
 
 #include <map>
-#include <iostream>
-#include <fstream>
 
 using namespace lc;
 
@@ -123,7 +121,7 @@ BOOST_AUTO_TEST_CASE(basicTrain) {
 
             info.errorsBefore = errorsBefore;
             info.errorsAfter = errorsAfter;
-            info.name = func.first;
+            info.descr = func.first;
 
             stats.push_back(info);
 
