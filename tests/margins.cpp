@@ -10,36 +10,19 @@ BOOST_AUTO_TEST_CASE(margins) {
     Objects data({ {-1, 1}, {7, 5}, {-0.1, 0}, {0.1, 0} });
     Vector classes({1, -1, 1, -1});
 
-    model.setData(data, classes);
-    model.setC(1);
+    model.c(1);
 
     // ------------------------------------------------------------------------
     BOOST_TEST_MESSAGE("Testing margins with Q");
-    model.setLossFunction(Q, diffQ);
+    model.lossFunction(LossFunction::Q);
 
-    model.setClassifier({-1, 1});
-    model.toMargins();
+    model.classifier({-1, 1});
+    model.toMargins(data, classes);
 
-    BOOST_CHECK(about(2, model.getMargins()[0]));
-    BOOST_CHECK(about(2, model.getMargins()[1]));
+    BOOST_CHECK(about(2, model.margins()[0]));
+    BOOST_CHECK(about(2, model.margins()[1]));
 
-    model.toClassifier();
-
-    for(size_t i = 0; i < data.size(); i++) {
-        BOOST_CHECK(model.predict(data[i]) == classes[i]);
-    }
-
-    // ------------------------------------------------------------------------
-    BOOST_TEST_MESSAGE("Testing margins with L");
-    model.setLossFunction(V, diffV);
-
-    model.setClassifier({-1, 1});
-    model.toMargins();
-
-    BOOST_CHECK(about(2, model.getMargins()[0]));
-    BOOST_CHECK(about(2, model.getMargins()[1]));
-
-    model.toClassifier();
+    model.toClassifier(data, classes);
 
     for(size_t i = 0; i < data.size(); i++) {
         BOOST_CHECK(model.predict(data[i]) == classes[i]);
@@ -47,15 +30,31 @@ BOOST_AUTO_TEST_CASE(margins) {
 
     // ------------------------------------------------------------------------
     BOOST_TEST_MESSAGE("Testing margins with L");
-    model.setLossFunction(L, diffL);
+    model.lossFunction(LossFunction::V);
 
-    model.setClassifier({-1, 1});
-    model.toMargins();
+    model.classifier({-1, 1});
+    model.toMargins(data, classes);
 
-    BOOST_CHECK(about(2, model.getMargins()[0]));
-    BOOST_CHECK(about(2, model.getMargins()[1]));
+    BOOST_CHECK(about(2, model.margins()[0]));
+    BOOST_CHECK(about(2, model.margins()[1]));
 
-    model.toClassifier();
+    model.toClassifier(data, classes);
+
+    for(size_t i = 0; i < data.size(); i++) {
+        BOOST_CHECK(model.predict(data[i]) == classes[i]);
+    }
+
+    // ------------------------------------------------------------------------
+    BOOST_TEST_MESSAGE("Testing margins with L");
+    model.lossFunction(LossFunction::L);
+
+    model.classifier({-1, 1});
+    model.toMargins(data, classes);
+
+    BOOST_CHECK(about(2, model.margins()[0]));
+    BOOST_CHECK(about(2, model.margins()[1]));
+
+    model.toClassifier(data, classes);
 
     for(size_t i = 0; i < data.size(); i++) {
         BOOST_CHECK(model.predict(data[i]) == classes[i]);

@@ -3,9 +3,10 @@
 #include <math.h>
 #include <exception>
 #include <fstream>
+#include <map>
 
 const size_t DEFAULT_MAXIMUM_STEPS = 10000;
-const double DEFAULT_PRECISION = 0.00000001;
+const double DEFAULT_PRECISION = 0.00001;
 
 namespace lc {
     Info::Info()
@@ -18,121 +19,178 @@ namespace lc {
           errorsBefore(-1),
           errorsAfter(-1),
           w({}),
-          oldW({}) {
+          oldW({}),
+          wasDifused(false) {
     }
 
     Model::Model()
-        : lf(Q),
-          diff(diffQ),
-          c(1),
-          maximumSteps(DEFAULT_MAXIMUM_STEPS),
-          precision(DEFAULT_PRECISION) {
+        : lf_(LossFunction::Q),
+          lfRaw_(Q),
+          diffRaw_(diffQ),
+          c_(1),
+          maximumSteps_(DEFAULT_MAXIMUM_STEPS),
+          precision_(DEFAULT_PRECISION) {
     }
 
     Model::~Model() {
     }
 
     void Model::setLossFunction(const Function& _lf, const Function& _diff) noexcept {
-        lf = _lf;
-        diff = _diff;
+        lfRaw_ = _lf;
+        diffRaw_ = _diff;
     }
 
-    void Model::setData(const Objects &objects_, const Vector &classes_) {
-        x = objects_;
-        y = classes_;
+    void Model::lossFunction(LossFunction lf) noexcept {
+        lf_ = lf;
+        lfRaw_ = lossFuncionRaw(lf);
+        diffRaw_ = lossFuncionDiff(lf);
     }
 
-    void Model::setC(double c_) noexcept {
-        c = c_;
+    LossFunction Model::lossFunction() noexcept {
+        return lf_;
     }
 
-    void Model::setMaximumStepsNumber(size_t n) noexcept {
-        maximumSteps = n;
-    }
-    void Model::setPrecision(double p) noexcept {
-        precision = p;
+    void Model::setC(double c) noexcept {
+        c_ = c;
     }
 
-    void Model::setClassifier(const Vector& w_) {
-        w = w_;
+    void Model::c(double c) noexcept {
+        c_ = c;
     }
 
-    const Vector& Model::getClassifier() const {
-        return w;
+    double Model::c() noexcept {
+        return c_;
     }
 
-    void Model::setMargins(const Vector& m_) {
-        margins = m_;
+    void Model::maximumStepsNumber(size_t n) noexcept {
+        maximumSteps_ = n;
     }
 
-    const Vector& Model::getMargins() const {
-        return margins;
+    size_t Model::maximumStepsNumber() noexcept {
+        return maximumSteps_;
     }
 
-    Info Model::train(bool skipBayes) {
-        if (x.empty()) {
+    void Model::precision(double p) noexcept {
+        precision_ = p;
+    }
+
+    double Model::precision() noexcept {
+        return precision_;
+    }
+
+    void Model::classifier(const Vector &w) {
+        w_ = w;
+    }
+
+    const Vector& Model::classifier() const {
+        return w_;
+    }
+
+    void Model::magrins(const Vector &m_) {
+        margins_ = m_;
+    }
+
+    const Vector& Model::margins() const {
+        return margins_;
+    }
+
+    const Info& Model::i() {
+        return i_;
+    }
+
+    Info Model::train(
+            const Objects& rawX,
+            const Vector& rawY,
+            bool skipBayes,
+            bool skipScale,
+            bool skipDefuse) {
+        if (rawX.empty()) {
             throw std::runtime_error("Problem doesn't have entries");
         }
 
-        if (x[0].empty()) {
+        if (rawX[0].empty()) {
             throw std::runtime_error("Error obj");
         }
 
-        if (x.size() != y.size()) {
+        if (rawX.size() != rawY.size()) {
             throw std::runtime_error("Error size");
         }
 
-        Info i;
-        i.objects = x.size();
-        i.features = x[0].size();
-        i.c = c;
+        i_.objects = rawX.size();
+        i_.features = rawX[0].size();
+        i_.c = c_;
+
+        Objects x = rawX;
+        Vector y = rawY;
+
+        x.shrink_to_fit();
+        y.shrink_to_fit();
+        for(auto& it : x) {
+            it.shrink_to_fit();
+        }
+
+        Vector factor;
+        Vector offset;
+        if (!skipScale) {
+            scaleData(x, 1, factor, offset);
+        }
 
         if (!skipBayes) {
-            bayes();
+            bayes(rawX, rawY);
         }
 
-        if (!w.empty()) {
-            toMargins();
+        if (!skipDefuse) {
+            defuse(x, y);
         }
 
-        if (margins.size() != x.size()) {
-            margins.assign(x.size(), 0.5);
+        if (!w_.empty()) {
+            toMargins(x, y);
         }
-        Vector marginsWas(margins.size(), 100);
 
-        for(i.steps = 0; i.steps < maximumSteps; i.steps++) {
-            if (distance(margins, marginsWas) < precision) {
+        if (margins_.size() != x.size()) {
+            margins_.assign(x.size(), 0.5);
+        }
+        Vector marginsWas(margins_.size(), 100);
+
+        margins_.shrink_to_fit();
+        marginsWas.shrink_to_fit();
+
+        for(i_.steps = 0; i_.steps < maximumSteps_; i_.steps++) {
+            if (distance(margins_, marginsWas) < precision_) {
                 break;
             }
 
-            marginsWas = margins;
-            for(std::size_t k = 0; k < margins.size(); k++) {
-                double tmp = margins[k];
+            marginsWas = margins_;
+            for(std::size_t k = 0; k < margins_.size(); k++) {
+                double tmp = margins_[k];
 
-                for(std::size_t i = 0; i < margins.size(); i++) {
-                    tmp += (-c) * diff(margins[i]) * y[i] * y[k] * dot(x[i], x[k]);
+                for(std::size_t i = 0; i < margins_.size(); i++) {
+                    tmp += (-c_) * diffRaw_(margins_[i]) * y[i] * y[k] * dot(x[i], x[k]);
                 }
-                margins[k] = tmp;
+                margins_[k] = tmp;
             }
         }
 
-        toClassifier();
+        toClassifier(x, y);
 
-        i.precision = distance(margins, marginsWas);
-        i.w = w;
-        return i;
+        if (!skipScale) {
+            unscaleVector(w_, factor, offset);
+        }
+        i_.precision = distance(margins_, marginsWas);
+        i_.w = w_;
+
+        return i_;
     }
 
     int Model::predict(const Vector& value) const {
-        if (w.empty() || w.size() != value.size()) {
+        if (w_.empty() || w_.size() != value.size()) {
             throw std::runtime_error("Model was not configured");
         }
-        return dot(w, value) >= 0 ? 1 : -1;
+        return dot(w_, value) >= 0 ? 1 : -1;
     }
 
-    // TODO: check?
     // Probably a lot of errors
-    void Model::bayes() {
+    void Model::bayes(const Objects& x, const Vector& y) {
         if (x.empty() || y.empty() || x.size() != y.size()) {
             throw std::runtime_error("Model was not configured");
         }
@@ -167,49 +225,85 @@ namespace lc {
             dis2[i] = pow(dis2[i] / static_cast<double>(p2), 2) - pow(means2[i], 2);
         }
 
-        w.assign(n, 0);
+        w_.assign(n, 0);
         for(size_t j = 0; j < x.size(); j++) {
             for(size_t i = 0; i < n; i++) {
                 double mean = y[j] == 1 ? means1[i] : means2[i];
                 double dis = y[j] == 1 ? dis1[i] : dis2[i];
-                w[i] += y[j] * (mean / dis);
+                w_[i] += y[j] * (mean / dis);
             }
         }
     }
 
-    void Model::toMargins() {
-        if (w.empty() || x.empty() || y.empty()) {
+    void Model::toMargins(const Objects& x, const Vector& y) {
+        if (w_.empty() || x.empty() || y.empty()) {
             throw std::runtime_error("Unable to create Margins.\nModel was not configured");
         }
 
-        margins.assign(x.size(), 0);
+        margins_.assign(x.size(), 0);
         for(size_t i = 0; i < x.size(); i++) {
-            margins[i] = dot(w, x[i]) * y[i];
+            margins_[i] = dot(w_, x[i]) * y[i];
         }
     }
 
-    void Model::toClassifier() {
-        if (margins.empty() || x.empty() || y.empty()) {
+    void Model::toClassifier(const Objects& x, const Vector& y) {
+        if (margins_.empty() || x.empty() || y.empty()) {
             throw std::runtime_error("Unable to create Classifier.\nModel was not configured");
         }
         size_t n = x[0].size();
-        w.assign(n, 0);
+        w_.assign(n, 0);
         for(size_t i = 0; i < x.size(); i++) {
             for(size_t k = 0; k < n; k++) {
-                double diffI = diff(-margins[i]);
-                w[k] += (-c) * diffI * x[i][k] * y[i];
+                double diffI = diffRaw_(-margins_[i]);
+                w_[k] += (-c_) * diffI * x[i][k] * y[i];
             }
         }
     }
 
+    // TODO: this implementation spoilers initial task
+    // Just disabled for now
+    void  Model::defuse(Objects& x, Vector& y) {
+        return;
+        /*
+        if (oldX.empty() || oldY.empty() || oldX.size() != oldY.size() || oldX[0].empty()) {
+            throw std::runtime_error("Objects do not present for defusing");
+        }
+        if (w_.empty()) {
+            newX = oldX;
+            newY = oldY;
+            return;
+        }
+
+        auto lfDiff = lossFuncionDiff(lf_);
+        for(size_t i = 0; i < oldX.size(); i++) {
+            if (!isSame(lfDiff(dot(w_, oldX[i]) * oldY[i]), 0)) {
+                newX.push_back(oldX[i]);
+                newY.push_back(oldY[i]);
+            }
+        }
+
+        i_.defused = oldX.size() - newX.size();
+
+        if (oldX.size() == newX.size()) {
+            return;
+        }
+
+        if (oldX.size() / 2 < (newX.size() + 1)) {
+            newX = oldX;
+            newY = oldY;
+            return;
+        }
+        i_.wasDifused = true;*/
+    }
+
     void Model::save(const std::string& path) {
-        if (w.empty()) {
+        if (w_.empty()) {
             throw std::runtime_error("Model was not configured");
         }
         std::ofstream out;
         out.open(path);
 
-        for(auto it : w) {
+        for(auto it : w_) {
             out << it << std::endl;
         }
 
@@ -217,7 +311,7 @@ namespace lc {
     }
 
     void Model::load(const std::string& path) {
-        w.clear();
+        w_.clear();
         std::ifstream modelFile(path);
         if (!modelFile) {
             throw std::runtime_error("File " + path + " not found!");
@@ -225,7 +319,70 @@ namespace lc {
         std::string line;
         while(std::getline(modelFile, line)) {
             if (line == "\n") continue;
-            w.push_back(std::stod(line));
+            w_.push_back(std::stod(line));
         }
+    }
+
+    void checkData(const Objects& o, const Vector& c) {
+        if (o.empty()) {
+            throw std::runtime_error("Training set is empty!");
+        }
+        if (o.size() != c.size()) {
+            throw std::runtime_error("Mismatch between Objects and Classes");
+        }
+    }
+
+    const Function& lossFuncionRaw(LossFunction lf) noexcept {
+        static std::map<LossFunction, Function> data = {
+                {LossFunction::V, V},
+                {LossFunction::Q, Q},
+                {LossFunction::Q3, Q3},
+                {LossFunction::Q4, Q4},
+                {LossFunction::S, S},
+                {LossFunction::L, L},
+                {LossFunction::E, E},
+        };
+        return data[lf];
+    }
+
+    const Function& lossFuncionDiff(LossFunction lf) noexcept {
+        static std::map<LossFunction, Function> data = {
+                {LossFunction::V, diffV},
+                {LossFunction::Q, diffQ},
+                {LossFunction::Q3, diffQ3},
+                {LossFunction::Q4, diffQ4},
+                {LossFunction::S, diffS},
+                {LossFunction::L, diffL},
+                {LossFunction::E, diffE},
+        };
+        return data[lf];
+    }
+
+    LossFunction lossFuncionByName(const std::string& name) {
+        static std::map<std::string, LossFunction> data = {
+                {"V", LossFunction::V},
+                {"Q", LossFunction::Q},
+                {"Q2", LossFunction::Q},
+                {"Q3", LossFunction::Q3},
+                {"Q4", LossFunction::Q4},
+                {"S", LossFunction::S},
+                {"L", LossFunction::L},
+                {"E", LossFunction::E},
+        };
+        return data[name];
+    }
+
+    std::string lossFunctionToName(LossFunction lf) noexcept {
+        std::map<LossFunction, std::string> data = {
+                {LossFunction::V, "V"},
+                {LossFunction::Q, "Q"},
+                {LossFunction::Q, "Q2"},
+                {LossFunction::Q3, "Q3"},
+                {LossFunction::Q4, "Q4"},
+                {LossFunction::S, "S"},
+                {LossFunction::L, "L"},
+                {LossFunction::E, "E"},
+        };
+        return  data[lf];
     }
 }

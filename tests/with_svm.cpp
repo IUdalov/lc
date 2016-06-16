@@ -13,12 +13,11 @@ BOOST_AUTO_TEST_CASE(compateWithSVM) {
     //writeSVMFile("/Users/iudalov/Current/lc/third-party/libsvm/heart_scale.plain", o, c);
 
     Model model;
-    model.setLossFunction(Q, diffQ);
-    model.setData(o, c);
+    model.lossFunction(LossFunction::Q);
     model.setC(0.1);
-    model.bayes();
+    model.bayes(o, c);
     double errorsBefore = checkData(model, o, c);
-    auto info = model.train();
+    auto info = model.train(o, c);
     double errorsAfter = checkData(model, o, c);
     (void)info;
 }

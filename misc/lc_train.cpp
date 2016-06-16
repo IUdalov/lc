@@ -60,9 +60,8 @@ int main(int argc, char* argv[]) {
     }
     m.setLossFunction(lossFuncs.find(func)->second.first, lossFuncs.find(func)->second.second);
     m.setC(std::stod(rawC));
-    m.setData(objects, classes);
 
-    Info i = m.train();
+    Info i = m.train(objects, classes);
     m.save(modelFile);
 
     std::cout << "Info" << std::endl;

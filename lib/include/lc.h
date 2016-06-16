@@ -25,7 +25,14 @@ namespace lc {
         Vector w;
         Vector oldW;
 
+        bool wasDifused;
+        size_t defused;
+
         Info();
+    };
+
+    enum class LossFunction {
+        V, Q, Q3, Q4, S, L, E
     };
 
     class Model {
@@ -33,43 +40,62 @@ namespace lc {
         Model();
         ~Model();
 
-        void setData(const Objects& objects_, const Vector& classes_);
+        Info train(
+                const Objects& objects,
+                const Vector& classes,
+                bool skipBayes = false,
+                bool skipScale = false,
+                bool skipDefuse = true);
+        int predict(const Vector&) const;
 
         void setLossFunction(const Function& _lf, const Function& _diff) noexcept;
-        void setC(double c) noexcept;
-        void setMaximumStepsNumber(size_t steps) noexcept;
-        void setPrecision(double precision) noexcept;
+        void lossFunction(LossFunction) noexcept;
+        LossFunction lossFunction() noexcept;
 
-        Info train(bool skipBayes = false);
-        int predict(const Vector&) const;
+        void setC(double c) noexcept;
+        void c(double c) noexcept;
+        double c() noexcept;
+
+        void maximumStepsNumber(size_t steps) noexcept;
+        size_t maximumStepsNumber() noexcept;
+        void precision(double precision) noexcept;
+        double precision() noexcept;
 
         void save(const std::string& path);
         void load(const std::string& path);
 
-        void bayes();
-        void toMargins();
-        void toClassifier();
+        void classifier(const Vector &);
+        const Vector& classifier() const;
+
+        void magrins(const Vector &m);
+        const Vector& margins() const;
+
+        const Info& i();
 
     public:
-        void setClassifier(const Vector&);
-        const Vector& getClassifier() const;
-
-        void setMargins(const Vector&);
-        const Vector& getMargins() const;
+        void bayes(const Objects& objects, const Vector& classes);
+        void toMargins(const Objects& x, const Vector& y);
+        void toClassifier(const Objects& x, const Vector& y);
+        void defuse(Objects& x, Vector& y);
 
     private:
-        Vector w;       // classifier
-        Vector margins;
+        Vector w_;
+        Vector margins_;
 
-        Objects x;
-        Vector y;       // classes
+        LossFunction lf_;
+        Function lfRaw_;
+        Function diffRaw_;
 
-        Function lf;
-        Function diff;
-        double c;
-        size_t maximumSteps;
-        double precision;
+        double c_;
+        size_t maximumSteps_;
+        double precision_;
+
+        Info i_;
     };
+
+    void scaleData(Objects& x, double scaleValue, Vector& factor, Vector& offset);
+    void unscaleVector(Vector& v, const Vector& factor, const Vector& offset);
+    //void checkData(const Objects& o, const Vector& c);
 
     // Loss functions ---------------------------------------------------------
     inline double V(double m) { return m < 1 ? 1 - m : 0.0; }
@@ -93,8 +119,14 @@ namespace lc {
     inline double E(double m) { return exp(-m); }
     inline double diffE(double m) { return -1 * exp(-m); }
 
+    const Function& lossFuncionRaw(LossFunction lf) noexcept;
+    const Function& lossFuncionDiff(LossFunction lf) noexcept;
+    LossFunction lossFuncionByName(const std::string& name);
+    std::string lossFunctionToName(LossFunction lf) noexcept;
+
     // Malicious --------------------------------------------------------------
     double dot(const Vector& lf, const Vector& rf);
     double length(const Vector& data);
     double distance(const Vector& v1, const Vector& v2);
+    bool isSame(double a, double b);
 }

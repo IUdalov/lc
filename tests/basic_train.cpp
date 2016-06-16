@@ -3,8 +3,6 @@
 #include <lc.h>
 #include <utils/utils.h>
 
-#include <map>
-
 using namespace lc;
 
 BOOST_AUTO_TEST_CASE(simpleTrainWithQ) {
@@ -34,12 +32,11 @@ BOOST_AUTO_TEST_CASE(simpleTrainWithQ) {
     );
 
     Model model;
-    model.setLossFunction(Q, diffQ);
-    model.setData(data, classes);
-    model.setC(0.01);
-    model.setClassifier({1,2,3});
+    model.lossFunction(LossFunction::Q);
+    model.c(0.01);
+    model.classifier({1, 2, 3});
     double errorsBefore = checkData(model, testData, testClasses);
-    auto info = model.train(true);
+    auto info = model.train(data, classes, true, true, true);
     double errorsAfter = checkData(model, testData, testClasses);
     (void)info;
     BOOST_CHECK(errorsBefore >= errorsAfter);
@@ -48,17 +45,9 @@ BOOST_AUTO_TEST_CASE(simpleTrainWithQ) {
 
 using std::pair;
 typedef std::pair<double, double> dpair;
-BOOST_AUTO_TEST_CASE(basicTrain) {
-    std::map<char, pair<Function, Function>> lossFuncs({
-            {'1', {V, diffV}},
-            {'2', {Q, diffQ}},
-            {'3', {Q3, diffQ3}},
-            {'4', {Q4, diffQ4}},
-            //{'L', {L, diffL}},
-            //{'S', {S, diffS}},
-            //{'/E', {E, diffE}},
-    });
 
+BOOST_AUTO_TEST_CASE(basicTrain) {
+    std::vector<LossFunction> lossFuncs({LossFunction::V, LossFunction::Q, LossFunction::Q3, LossFunction::Q4});
     // pairs of stddiv and offset
     std::vector<std::pair<double, double>> stddivAndOffsets({
             dpair(1,0.2),
@@ -104,27 +93,22 @@ BOOST_AUTO_TEST_CASE(basicTrain) {
         for(auto func : lossFuncs) {
             Model model;
 
-            model.setLossFunction(
-                    func.second.first, // just function
-                    func.second.second // diff
-            );
+            model.lossFunction(func);
 
-            model.setData(data, classes);
-            model.setC(0.001/stddivAndOffset.second);
-            model.setPrecision(0.0001);
-            model.setMaximumStepsNumber(1000);
-            model.setClassifier(wAbout);
+            model.c(0.001/stddivAndOffset.second);
+            model.precision(0.0001);
+            model.maximumStepsNumber(1000);
+            model.classifier(wAbout);
 
             double errorsBefore = checkData(model, testData, testClasses);
-            Info info = model.train(true);
+            Info info = model.train(data, classes, true);
             double errorsAfter = checkData(model, testData, testClasses);
 
             info.errorsBefore = errorsBefore;
             info.errorsAfter = errorsAfter;
-            info.descr = func.first;
+            info.descr = lossFunctionToName(func);
 
             stats.push_back(info);
-
 
             if (errorsBefore < errorsAfter) {
                 spoiledClassifier++;
