@@ -41,9 +41,9 @@ BOOST_AUTO_TEST_CASE(scaleSample) {
 }
 
 BOOST_AUTO_TEST_CASE(trainWithScale) {
-    size_t objects = 10;
+    size_t objects = 100;
     size_t features = 3;
-    size_t testObjects = 100;
+    size_t testObjects = 1000;
     Objects data, testData;
     Vector classes, testClasses;
 

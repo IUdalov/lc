@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(build-and-test)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O0 -g")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3")
 endif()
 
 include_directories(. tests lib/include third-party/libsvm)

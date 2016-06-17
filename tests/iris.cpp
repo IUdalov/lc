@@ -1,4 +1,4 @@
-// TODO: fix or delete
+// TODO: fix path
 #ifdef DISABLED_TESTS
 
 #include <boost/test/unit_test.hpp>
@@ -9,7 +9,7 @@
 using namespace lc;
 
 BOOST_AUTO_TEST_CASE(irisDataSet) {
-    std::string path("data/iris.simplified.csv");
+    std::string path("/Users/iudalov/Current/lc/data/iris.simplified.csv");
 
     Model model;
     Objects data;
@@ -17,11 +17,11 @@ BOOST_AUTO_TEST_CASE(irisDataSet) {
 
     readCSVFile(path, data, classes);
 
-    model.setData(data, classes);
-    model.setC(0.0001);
-    model.setLossFunction(Q, diffQ);
+    //model.setData(data, classes);
+    //model.setC(0.0001);
+    //model.setLossFunction(Q, diffQ);
 
-    model.train();
+    model.train(data, classes);
 
     double errors = checkData(model, data, classes);
     BOOST_CHECK(errors < 0.3);

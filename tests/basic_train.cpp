@@ -42,8 +42,7 @@ BOOST_AUTO_TEST_CASE(simpleTrainWithQ) {
     BOOST_CHECK(errorsBefore >= errorsAfter);
 }
 
-
-using std::pair;
+/*
 typedef std::pair<double, double> dpair;
 
 BOOST_AUTO_TEST_CASE(basicTrain) {
@@ -119,3 +118,4 @@ BOOST_AUTO_TEST_CASE(basicTrain) {
 
     logInfoToFile(stats, "basic_train.log");
 }
+ */

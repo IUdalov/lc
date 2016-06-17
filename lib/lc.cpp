@@ -10,23 +10,19 @@ const double DEFAULT_PRECISION = 0.00001;
 
 namespace lc {
     Info::Info()
-        : descr{"Do not available"},
-          objects(0),
+        : objects(0),
           features(0),
           steps(0),
           c(-1),
           precision(0),
-          errorsBefore(-1),
-          errorsAfter(-1),
-          w({}),
-          oldW({}),
-          wasDifused(false) {
+          w({}) {
     }
 
     Model::Model()
         : lf_(LossFunction::Q),
           lfRaw_(Q),
           diffRaw_(diffQ),
+          k_(Kernel::Homogenous1),
           c_(1),
           maximumSteps_(DEFAULT_MAXIMUM_STEPS),
           precision_(DEFAULT_PRECISION) {
@@ -43,11 +39,18 @@ namespace lc {
     void Model::lossFunction(LossFunction lf) noexcept {
         lf_ = lf;
         lfRaw_ = lossFuncionRaw(lf);
-        diffRaw_ = lossFuncionDiff(lf);
+        diffRaw_ = lossFunctionDiff(lf);
     }
 
     LossFunction Model::lossFunction() noexcept {
         return lf_;
+    }
+
+    void Model::kernel(Kernel k) noexcept {
+        k_ = k;
+    }
+    Kernel Model::kernel() noexcept {
+        return k_;
     }
 
     void Model::setC(double c) noexcept {
@@ -165,7 +168,10 @@ namespace lc {
                 double tmp = margins_[k];
 
                 for(std::size_t i = 0; i < margins_.size(); i++) {
-                    tmp += (-c_) * diffRaw_(margins_[i]) * y[i] * y[k] * dot(x[i], x[k]);
+                    double res = diffRaw_(margins_[i]);
+                    if (res == 0) {
+                        tmp += (-c_) * res * y[i] * y[k] * dot(x[i], x[k]);
+                    }
                 }
                 margins_[k] = tmp;
             }
@@ -274,7 +280,7 @@ namespace lc {
             return;
         }
 
-        auto lfDiff = lossFuncionDiff(lf_);
+        auto lfDiff = lossFunctionDiff(lf_);
         for(size_t i = 0; i < oldX.size(); i++) {
             if (!isSame(lfDiff(dot(w_, oldX[i]) * oldY[i]), 0)) {
                 newX.push_back(oldX[i]);
@@ -345,7 +351,7 @@ namespace lc {
         return data[lf];
     }
 
-    const Function& lossFuncionDiff(LossFunction lf) noexcept {
+    const Function& lossFunctionDiff(LossFunction lf) noexcept {
         static std::map<LossFunction, Function> data = {
                 {LossFunction::V, diffV},
                 {LossFunction::Q, diffQ},
@@ -384,5 +390,39 @@ namespace lc {
                 {LossFunction::E, "E"},
         };
         return  data[lf];
+    }
+
+    const KernelFunction& kernelRaw(Kernel k) noexcept {
+        static std::map<Kernel, KernelFunction> data {
+                {Kernel::Homogenous1, [](const Vector& a, const Vector& b) {
+                    return dot(a, b);
+                }},
+                {Kernel::Homogenous3, [](const Vector& a, const Vector& b) {
+                    return pow(dot(a, b), 3);
+                }},
+                {Kernel::Inhomogenius1, [](const Vector& a, const Vector& b) {
+                    return dot(a, b) + 1;
+                }},
+                {Kernel::Inhomogenius3, [](const Vector& a, const Vector& b) {
+                    return pow(dot(a, b) + 1, 3);
+                }},
+                {Kernel::Radial, [](const Vector& a, const Vector& b) {
+                    return NAN;
+                }},
+                {Kernel::GaussianRadial, [](const Vector& a, const Vector& b) {
+                    return NAN;
+                }},
+                {Kernel::Hyperbolic, [](const Vector& a, const Vector& b) {
+                    return NAN;
+                }}};
+        return data[k];
+    }
+
+    Kernel kernelByName(const std::string& name) noexcept {
+        return Kernel::Homogenous1;
+    }
+
+    std::string kernelToName(Kernel k) noexcept {
+        return "";
     }
 }

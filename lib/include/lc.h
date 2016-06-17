@@ -11,28 +11,37 @@ namespace lc {
     typedef std::vector<double> Vector;
     typedef std::vector<Vector> Objects;
     typedef std::function<double(double)> Function;
+    typedef std::function<double(const Vector&, const Vector&)> KernelFunction;
 
 
     struct Info {
-        std::string descr;
         size_t objects;
         size_t features;
         size_t steps;
         double c;
         double precision;
-        double errorsBefore;
-        double errorsAfter;
         Vector w;
-        Vector oldW;
-
-        bool wasDifused;
-        size_t defused;
+        //Vector oldW;
+        //bool wasDifused;
+        //size_t defused;
 
         Info();
     };
 
     enum class LossFunction {
         V, Q, Q3, Q4, S, L, E
+    };
+
+    enum class Kernel {
+        Homogenous1,
+        //Homogenous2,
+        Homogenous3,
+        Inhomogenius1,
+        //Inhomogenius2,
+        Inhomogenius3,
+        Radial,
+        GaussianRadial,
+        Hyperbolic
     };
 
     class Model {
@@ -51,6 +60,9 @@ namespace lc {
         void setLossFunction(const Function& _lf, const Function& _diff) noexcept;
         void lossFunction(LossFunction) noexcept;
         LossFunction lossFunction() noexcept;
+
+        void kernel(Kernel) noexcept;
+        Kernel kernel() noexcept;
 
         void setC(double c) noexcept;
         void c(double c) noexcept;
@@ -86,6 +98,8 @@ namespace lc {
         Function lfRaw_;
         Function diffRaw_;
 
+        Kernel k_;
+
         double c_;
         size_t maximumSteps_;
         double precision_;
@@ -120,9 +134,13 @@ namespace lc {
     inline double diffE(double m) { return -1 * exp(-m); }
 
     const Function& lossFuncionRaw(LossFunction lf) noexcept;
-    const Function& lossFuncionDiff(LossFunction lf) noexcept;
+    const Function& lossFunctionDiff(LossFunction lf) noexcept;
     LossFunction lossFuncionByName(const std::string& name);
     std::string lossFunctionToName(LossFunction lf) noexcept;
+
+    const KernelFunction& kernelRaw(Kernel k) noexcept;
+    Kernel kernelByName(const std::string& name) noexcept;
+    std::string kernelToName(Kernel k) noexcept;
 
     // Malicious --------------------------------------------------------------
     double dot(const Vector& lf, const Vector& rf);

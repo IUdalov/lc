@@ -35,7 +35,7 @@ void generateNormalData(
         size_t features,
         double stddiv, // Standard deviation.
         double offset, // Offset for each feature. offset * class
-        std::string seed = "random seed");
+        const std::string& seed = "random seed");
 
 void logInfoToFile(std::vector<lc::Info> stats, std::string path);
 

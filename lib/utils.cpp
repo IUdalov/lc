@@ -62,7 +62,7 @@ namespace lc {
 
         for(size_t j = 0; j < n; j++) {
             factor[j] = scaleValue / (max[j] - min[j]);
-            offset[j] = min[j] + (max[j] - min[j]) / 2;
+            offset[j] = - (max[j] + min[j]) / 2;
         }
         for(size_t i = 0; i < l; i++) {
             for(size_t j = 0; j < n; j ++) {

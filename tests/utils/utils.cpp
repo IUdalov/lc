@@ -209,7 +209,7 @@ bool about(double a, double b) {
     return fabs(a - b) < 0.00000000001;
 }
 
-void generateNormalData(Objects& o, Vector& c, size_t objects, size_t features, double stddiv, double offset, std::string seed) {
+void generateNormalData(Objects& o, Vector& c, size_t objects, size_t features, double stddiv, double offset, const std::string& seed) {
     o.clear();
     c.clear();
 
@@ -238,14 +238,11 @@ void logInfoToFile(std::vector<Info> stats, std::string path) {
     for(auto i : stats) {
         c++;
         log << "Exp #" << c <<" {" << std::endl;
-        log << "\tdescr:        " << i.descr << std::endl;
         log << "\tobjects:      " << i.objects << std::endl;
         log << "\tfeatures:     " << i.features << std::endl;
         log << "\tsteps:        " << i.steps << std::endl;
         log << "\tprecision:    " << i.precision << std::endl;
         log << "\tc:            " << i.c << std::endl;
-        log << "\terrorsBefore: " << i.errorsBefore << std::endl;
-        log << "\terrorsAfter:  " << i.errorsAfter << std::endl;
         log << "\tw:            "; for(auto wi : i.w) log << wi << ", "; log << std::endl;
         log << "}" << std::endl << std::endl;
     }
