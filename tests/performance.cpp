@@ -91,7 +91,5 @@ BOOST_AUTO_TEST_CASE(currentTest) {
         std::cout << "Predicting..." << std::endl;
         double err = checkData(m, o, c);
         std::cout << "Assurance:" << err << std::endl;
-
-        //BOOST_CHECK(true);
     }
 }

@@ -6,7 +6,7 @@
 using namespace lc;
 
 void printUsage(const std::string progName) {
-    std::cout << "Usage: " << progName << " [options] [function] c training_file model_file" << std::endl;
+    std::cout << "Usage: " << progName << " [options] [function] c max_steps training_file model_file" << std::endl;
     std::cout << "Options:" << std::endl;
     std::cout << "\t-svm - read input file in SVM format" << std::endl;
     std::cout << "\t-csv - read input file in CSV format." << std::endl;
@@ -30,7 +30,7 @@ const std::map<std::string, std::pair<Function, Function>> lossFuncs({
         {"E", {E, diffE}},});
 
 int main(int argc, char* argv[]) {
-    if (argc != 6) {
+    if (argc != 7) {
         printUsage(argv[0]);
         return 1;
     }
@@ -38,8 +38,9 @@ int main(int argc, char* argv[]) {
     std::string inputFormat(argv[1]);
     std::string func(argv[2]);
     std::string rawC(argv[3]);
-    std::string trainingFile(argv[4]);
-    std::string modelFile(argv[5]);
+    std::string rawSteps(argv[4]);
+    std::string trainingFile(argv[5]);
+    std::string modelFile(argv[6]);
     Objects objects;
     Vector classes;
     Model m;
@@ -58,8 +59,9 @@ int main(int argc, char* argv[]) {
         printUsage(argv[0]);
         return 1;
     }
-    m.setLossFunction(lossFuncs.find(func)->second.first, lossFuncs.find(func)->second.second);
+    m.lossFunction(lossFuncionByName(func));
     m.setC(std::stod(rawC));
+    m.maximumStepsNumber(std::stoll(rawSteps));
 
     Info i = m.train(objects, classes);
     m.save(modelFile);

@@ -158,6 +158,8 @@ namespace lc {
         margins_.shrink_to_fit();
         marginsWas.shrink_to_fit();
 
+        std::vector<std::vector<double>> cache;
+        createCache(x,y, dot,cache);
         for(i_.steps = 0; i_.steps < maximumSteps_; i_.steps++) {
             if (distance(margins_, marginsWas) < precision_) {
                 break;
@@ -168,10 +170,7 @@ namespace lc {
                 double tmp = margins_[k];
 
                 for(std::size_t i = 0; i < margins_.size(); i++) {
-                    double res = diffRaw_(margins_[i]);
-                    if (res == 0) {
-                        tmp += (-c_) * res * y[i] * y[k] * dot(x[i], x[k]);
-                    }
+                    tmp += (-c_) * diffRaw_(margins_[i]) * cache[i][k];
                 }
                 margins_[k] = tmp;
             }

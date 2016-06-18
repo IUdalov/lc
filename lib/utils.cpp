@@ -82,4 +82,21 @@ namespace lc {
             v[i] = v[i] / factor[i] - offset[i];
         }
     }
+
+    void createCache(const Objects& x, const Vector& y, KernelFunction f, std::vector<std::vector<double>>& cache) {
+        cache.clear();
+        size_t l = x.size();
+        cache.resize(l, std::vector<double>(l, 0));
+
+        cache.shrink_to_fit();
+        for(auto& c : cache) {
+            c.shrink_to_fit();
+        }
+
+        for(size_t i = 0; i < l; i++) {
+            for(size_t j = 0; j < l; j++) {
+                cache[i][j] = y[i] * y[j] * f(x[i], x[j]);
+            }
+        }
+    }
 }

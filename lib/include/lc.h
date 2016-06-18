@@ -110,6 +110,7 @@ namespace lc {
     void scaleData(Objects& x, double scaleValue, Vector& factor, Vector& offset);
     void unscaleVector(Vector& v, const Vector& factor, const Vector& offset);
     //void checkData(const Objects& o, const Vector& c);
+    void createCache(const Objects& x, const Vector& y, KernelFunction f, std::vector<std::vector<double>>& cache);
 
     // Loss functions ---------------------------------------------------------
     inline double V(double m) { return m < 1 ? 1 - m : 0.0; }
