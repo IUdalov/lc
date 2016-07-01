@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(simpleTrainWithQ) {
     model.c(0.01);
     model.classifier({1, 2, 3});
     double errorsBefore = checkData(model, testData, testClasses);
-    auto info = model.train(data, classes, true, true, true);
+    auto info = model.train(data, classes, true, true);
     double errorsAfter = checkData(model, testData, testClasses);
     (void)info;
     BOOST_CHECK(errorsBefore >= errorsAfter);

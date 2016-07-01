@@ -1,8 +1,6 @@
 project(svm)
 
-set(SOURCE_SVM
-        libsvm/svm.h
-        libsvm/svm.cpp)
+set(OTHER_SOURCE empty.cpp)
 
 include_directories(libsvm)
-add_library(svm ${SOURCE_SVM})
+add_library(svm ${OTHER_SOURCE})

@@ -1,6 +1,7 @@
 #include <lc.h>
 
 #include <math.h>
+#include <limits>
 
 namespace lc {
     std::string getVersion() {
@@ -20,7 +21,7 @@ namespace lc {
             throw std::runtime_error(std::string("Error in") + __FUNCTION__);
         }
         double res = 0;
-        for(auto i = 0; i < v1.size(); i++) {
+        for(size_t i = 0; i < v1.size(); i++) {
             res += pow(v1[i] - v2[i], 2);
         }
         return sqrt(res);
@@ -33,8 +34,9 @@ namespace lc {
         }
         return acc;
     }
-    bool isSame(double a, double b) {
-        return fabs(a - b) < 0.00000000001;
+
+    bool compare(double a, double b) {
+        return fabs(a - b) < 3*std::numeric_limits<double>::epsilon();
     }
 
     void scaleData(Objects& x, double scaleValue, Vector& factor, Vector& offset) {

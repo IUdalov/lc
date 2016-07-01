@@ -4,3 +4,6 @@
 [submodule "third-party/test"]
 	path = third-party/test
 	url = git@github.com:boostorg/test.git
+[submodule "third-party/json"]
+	path = third-party/json
+	url = https://github.com/nlohmann/json

@@ -1,9 +1,7 @@
-#include "lc.h"
+#include <lc.h>
 
 #include <math.h>
 #include <exception>
-#include <fstream>
-#include <map>
 
 const size_t DEFAULT_MAXIMUM_STEPS = 10000;
 const double DEFAULT_PRECISION = 0.00001;
@@ -20,8 +18,6 @@ namespace lc {
 
     Model::Model()
         : lf_(LossFunction::Q),
-          lfRaw_(Q),
-          diffRaw_(diffQ),
           k_(Kernel::Homogenous1),
           c_(1),
           maximumSteps_(DEFAULT_MAXIMUM_STEPS),
@@ -31,15 +27,8 @@ namespace lc {
     Model::~Model() {
     }
 
-    void Model::setLossFunction(const Function& _lf, const Function& _diff) noexcept {
-        lfRaw_ = _lf;
-        diffRaw_ = _diff;
-    }
-
     void Model::lossFunction(LossFunction lf) noexcept {
         lf_ = lf;
-        lfRaw_ = lossFuncionRaw(lf);
-        diffRaw_ = lossFunctionDiff(lf);
     }
 
     LossFunction Model::lossFunction() noexcept {
@@ -49,12 +38,9 @@ namespace lc {
     void Model::kernel(Kernel k) noexcept {
         k_ = k;
     }
+
     Kernel Model::kernel() noexcept {
         return k_;
-    }
-
-    void Model::setC(double c) noexcept {
-        c_ = c;
     }
 
     void Model::c(double c) noexcept {
@@ -89,7 +75,7 @@ namespace lc {
         return w_;
     }
 
-    void Model::magrins(const Vector &m_) {
+    void Model::margins(const Vector &m_) {
         margins_ = m_;
     }
 
@@ -105,8 +91,7 @@ namespace lc {
             const Objects& rawX,
             const Vector& rawY,
             bool skipBayes,
-            bool skipScale,
-            bool skipDefuse) {
+            bool skipScale) {
         if (rawX.empty()) {
             throw std::runtime_error("Problem doesn't have entries");
         }
@@ -139,11 +124,7 @@ namespace lc {
         }
 
         if (!skipBayes) {
-            bayes(rawX, rawY);
-        }
-
-        if (!skipDefuse) {
-            defuse(x, y);
+            bayes(x, y);
         }
 
         if (!w_.empty()) {
@@ -168,9 +149,9 @@ namespace lc {
             marginsWas = margins_;
             for(std::size_t k = 0; k < margins_.size(); k++) {
                 double tmp = margins_[k];
-
+                Function diffRaw = lossFunctionDiff(lf_);
                 for(std::size_t i = 0; i < margins_.size(); i++) {
-                    tmp += (-c_) * diffRaw_(margins_[i]) * cache[i][k];
+                    tmp += (-c_) * diffRaw(margins_[i]) * cache[i][k];
                 }
                 margins_[k] = tmp;
             }
@@ -191,7 +172,8 @@ namespace lc {
         if (w_.empty() || w_.size() != value.size()) {
             throw std::runtime_error("Model was not configured");
         }
-        return dot(w_, value) >= 0 ? 1 : -1;
+        KernelFunction k(kernelRaw(k_));
+        return k(w_, value) >= 0 ? 1 : -1;
     }
 
     // Probably a lot of errors
@@ -244,10 +226,10 @@ namespace lc {
         if (w_.empty() || x.empty() || y.empty()) {
             throw std::runtime_error("Unable to create Margins.\nModel was not configured");
         }
-
+        KernelFunction kernel(kernelRaw(k_));
         margins_.assign(x.size(), 0);
         for(size_t i = 0; i < x.size(); i++) {
-            margins_[i] = dot(w_, x[i]) * y[i];
+            margins_[i] = kernel(w_, x[i]) * y[i];
         }
     }
 
@@ -257,171 +239,13 @@ namespace lc {
         }
         size_t n = x[0].size();
         w_.assign(n, 0);
+
+        Function diffLf = lossFunctionDiff(lf_);
         for(size_t i = 0; i < x.size(); i++) {
             for(size_t k = 0; k < n; k++) {
-                double diffI = diffRaw_(-margins_[i]);
+                double diffI = diffLf(-margins_[i]);
                 w_[k] += (-c_) * diffI * x[i][k] * y[i];
             }
         }
-    }
-
-    // TODO: this implementation spoilers initial task
-    // Just disabled for now
-    void  Model::defuse(Objects& x, Vector& y) {
-        return;
-        /*
-        if (oldX.empty() || oldY.empty() || oldX.size() != oldY.size() || oldX[0].empty()) {
-            throw std::runtime_error("Objects do not present for defusing");
-        }
-        if (w_.empty()) {
-            newX = oldX;
-            newY = oldY;
-            return;
-        }
-
-        auto lfDiff = lossFunctionDiff(lf_);
-        for(size_t i = 0; i < oldX.size(); i++) {
-            if (!isSame(lfDiff(dot(w_, oldX[i]) * oldY[i]), 0)) {
-                newX.push_back(oldX[i]);
-                newY.push_back(oldY[i]);
-            }
-        }
-
-        i_.defused = oldX.size() - newX.size();
-
-        if (oldX.size() == newX.size()) {
-            return;
-        }
-
-        if (oldX.size() / 2 < (newX.size() + 1)) {
-            newX = oldX;
-            newY = oldY;
-            return;
-        }
-        i_.wasDifused = true;*/
-    }
-
-    void Model::save(const std::string& path) {
-        if (w_.empty()) {
-            throw std::runtime_error("Model was not configured");
-        }
-        std::ofstream out;
-        out.open(path);
-
-        for(auto it : w_) {
-            out << it << std::endl;
-        }
-
-        out.close();
-    }
-
-    void Model::load(const std::string& path) {
-        w_.clear();
-        std::ifstream modelFile(path);
-        if (!modelFile) {
-            throw std::runtime_error("File " + path + " not found!");
-        }
-        std::string line;
-        while(std::getline(modelFile, line)) {
-            if (line == "\n") continue;
-            w_.push_back(std::stod(line));
-        }
-    }
-
-    void checkData(const Objects& o, const Vector& c) {
-        if (o.empty()) {
-            throw std::runtime_error("Training set is empty!");
-        }
-        if (o.size() != c.size()) {
-            throw std::runtime_error("Mismatch between Objects and Classes");
-        }
-    }
-
-    const Function& lossFuncionRaw(LossFunction lf) noexcept {
-        static std::map<LossFunction, Function> data = {
-                {LossFunction::V, V},
-                {LossFunction::Q, Q},
-                {LossFunction::Q3, Q3},
-                {LossFunction::Q4, Q4},
-                {LossFunction::S, S},
-                {LossFunction::L, L},
-                {LossFunction::E, E},
-        };
-        return data[lf];
-    }
-
-    const Function& lossFunctionDiff(LossFunction lf) noexcept {
-        static std::map<LossFunction, Function> data = {
-                {LossFunction::V, diffV},
-                {LossFunction::Q, diffQ},
-                {LossFunction::Q3, diffQ3},
-                {LossFunction::Q4, diffQ4},
-                {LossFunction::S, diffS},
-                {LossFunction::L, diffL},
-                {LossFunction::E, diffE},
-        };
-        return data[lf];
-    }
-
-    LossFunction lossFuncionByName(const std::string& name) {
-        static std::map<std::string, LossFunction> data = {
-                {"V", LossFunction::V},
-                {"Q", LossFunction::Q},
-                {"Q2", LossFunction::Q},
-                {"Q3", LossFunction::Q3},
-                {"Q4", LossFunction::Q4},
-                {"S", LossFunction::S},
-                {"L", LossFunction::L},
-                {"E", LossFunction::E},
-        };
-        return data[name];
-    }
-
-    std::string lossFunctionToName(LossFunction lf) noexcept {
-        std::map<LossFunction, std::string> data = {
-                {LossFunction::V, "V"},
-                {LossFunction::Q, "Q"},
-                {LossFunction::Q, "Q2"},
-                {LossFunction::Q3, "Q3"},
-                {LossFunction::Q4, "Q4"},
-                {LossFunction::S, "S"},
-                {LossFunction::L, "L"},
-                {LossFunction::E, "E"},
-        };
-        return  data[lf];
-    }
-
-    const KernelFunction& kernelRaw(Kernel k) noexcept {
-        static std::map<Kernel, KernelFunction> data {
-                {Kernel::Homogenous1, [](const Vector& a, const Vector& b) {
-                    return dot(a, b);
-                }},
-                {Kernel::Homogenous3, [](const Vector& a, const Vector& b) {
-                    return pow(dot(a, b), 3);
-                }},
-                {Kernel::Inhomogenius1, [](const Vector& a, const Vector& b) {
-                    return dot(a, b) + 1;
-                }},
-                {Kernel::Inhomogenius3, [](const Vector& a, const Vector& b) {
-                    return pow(dot(a, b) + 1, 3);
-                }},
-                {Kernel::Radial, [](const Vector& a, const Vector& b) {
-                    return NAN;
-                }},
-                {Kernel::GaussianRadial, [](const Vector& a, const Vector& b) {
-                    return NAN;
-                }},
-                {Kernel::Hyperbolic, [](const Vector& a, const Vector& b) {
-                    return NAN;
-                }}};
-        return data[k];
-    }
-
-    Kernel kernelByName(const std::string& name) noexcept {
-        return Kernel::Homogenous1;
-    }
-
-    std::string kernelToName(Kernel k) noexcept {
-        return "";
     }
 }

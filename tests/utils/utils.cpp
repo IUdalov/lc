@@ -8,37 +8,6 @@
 
 using namespace lc;
 
-std::string dataPath(DataSets dataset) {
-    std::string prefix = "data/";
-    switch(dataset) {
-        case DataSets::iris:
-            return prefix + "iris.csv";
-        case DataSets::irisSimple:
-            return prefix + "iris.simplified.csv";
-        case DataSets::wine:
-            return  prefix + "data.txt";
-        case DataSets::easy:
-            return  prefix + "easy.csv";
-        case DataSets::easy2:
-            return  prefix + "easy2.csv";
-        case DataSets::easy3:
-            return  prefix + "easy3.csv";
-        case DataSets::easy4:
-            return  prefix + "easy4.csv";
-        default:
-            return {};
-    }
-}
-
-std::vector<std::string> csvDatasets() {
-    return {
-            dataPath(DataSets::irisSimple),
-            dataPath(DataSets::easy),
-            dataPath(DataSets::easy2),
-            dataPath(DataSets::easy3)
-    };
-}
-
 // val, val, val, class = {-1, 1}; 
 int readCSVFile(const std::string& path, Objects& data, Vector& classes) {
     std::ifstream csvFile(path);
@@ -152,7 +121,7 @@ int readSVMFile(const std::string& path, lc::Objects& data, lc::Vector& classes)
             }
         }
         bool isFull = true;
-        for(auto i = 0; i < o.size(); i++)
+        for(size_t i = 0; i < o.size(); i++)
             if (o[i] != o[i]) {
                 isFull = false; break;
             }
@@ -189,24 +158,14 @@ int writeSVMFile(const std::string& path,
     return  0;
 }
 
-void addDim(lc::Objects& data) {
-    for(size_t i = 0; i < data.size(); i++) {
-        data[i].push_back(1);
-    }
-}
-
 double checkData(const Model& model, const Objects data, const Vector classes) {
     size_t errors = 0;
-    for(auto i = 0; i < data.size(); i++) {
+    for(size_t i = 0; i < data.size(); i++) {
         int res = model.predict(data[i]);
         if (res != classes[i]) {errors++;}
     }
 
     return static_cast<double>(errors)/static_cast<double>(data.size());
-}
-
-bool about(double a, double b) {
-    return fabs(a - b) < 0.00000000001;
 }
 
 void generateNormalData(Objects& o, Vector& c, size_t objects, size_t features, double stddiv, double offset, const std::string& seed) {

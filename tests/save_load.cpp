@@ -13,7 +13,7 @@ BOOST_AUTO_TEST_CASE(saveLoad) {
     model.load("saveLoad.lc");
 
     auto w = model.classifier();
-    BOOST_CHECK(about(w[0], 3));
-    BOOST_CHECK(about(w[1], 2));
-    BOOST_CHECK(about(w[2], 1));
+    BOOST_CHECK(compare(w[0], 3));
+    BOOST_CHECK(compare(w[1], 2));
+    BOOST_CHECK(compare(w[2], 1));
 }

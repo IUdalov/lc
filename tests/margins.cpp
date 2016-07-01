@@ -19,8 +19,8 @@ BOOST_AUTO_TEST_CASE(margins) {
     model.classifier({-1, 1});
     model.toMargins(data, classes);
 
-    BOOST_CHECK(about(2, model.margins()[0]));
-    BOOST_CHECK(about(2, model.margins()[1]));
+    BOOST_CHECK(compare(2, model.margins()[0]));
+    BOOST_CHECK(compare(2, model.margins()[1]));
 
     model.toClassifier(data, classes);
 
@@ -29,14 +29,14 @@ BOOST_AUTO_TEST_CASE(margins) {
     }
 
     // ------------------------------------------------------------------------
-    BOOST_TEST_MESSAGE("Testing margins with L");
+    BOOST_TEST_MESSAGE("Testing margins with V");
     model.lossFunction(LossFunction::V);
 
     model.classifier({-1, 1});
     model.toMargins(data, classes);
 
-    BOOST_CHECK(about(2, model.margins()[0]));
-    BOOST_CHECK(about(2, model.margins()[1]));
+    BOOST_CHECK(compare(2, model.margins()[0]));
+    BOOST_CHECK(compare(2, model.margins()[1]));
 
     model.toClassifier(data, classes);
 
@@ -51,8 +51,8 @@ BOOST_AUTO_TEST_CASE(margins) {
     model.classifier({-1, 1});
     model.toMargins(data, classes);
 
-    BOOST_CHECK(about(2, model.margins()[0]));
-    BOOST_CHECK(about(2, model.margins()[1]));
+    BOOST_CHECK(compare(2, model.margins()[0]));
+    BOOST_CHECK(compare(2, model.margins()[1]));
 
     model.toClassifier(data, classes);
 

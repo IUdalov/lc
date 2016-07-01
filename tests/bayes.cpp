@@ -1,35 +1,22 @@
-// TODO: fix bayes
-#ifdef DISABLED_TESTS
-
 #include <boost/test/unit_test.hpp>
 
 #include <lc.h>
 #include <utils/utils.h>
 
-#include <iostream>
-
 using namespace lc;
 
 BOOST_AUTO_TEST_CASE(bayes) {
-    std::vector<std::string> dataSets = csvDatasets();
-
-    for(auto it = dataSets.begin(); it != dataSets.end(); it++) {
-        std::string path = *it;
-        Model model;
+    std::vector<size_t> testData {10, 50, 100};
+    for(auto t : testData) {
         Objects data;
         Vector classes;
+        generateNormalData(data, classes, t, t / 2, 1, 0.3,"BB King");
 
-        readCSVFile(path, data, classes);
-        addDim(data);
+        Model m;
+        m.maximumStepsNumber(0);
+        m.train(data, classes);
 
-        model.setC(1);
-        model.setData(data, classes);
-
-        model.bayes();
-
-        double errors = checkData(model, data, classes);
-        BOOST_CHECK_MESSAGE(errors < 0.3, "Bayes failed on " + path + ". Error: " + std::to_string(errors));
+        double errors = checkData(m, data, classes);
+        BOOST_CHECK(errors < 0.3);
     }
 }
-
-#endif

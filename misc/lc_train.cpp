@@ -20,15 +20,6 @@ void printUsage(const std::string progName) {
     std::cout << "\tE(x)  = e^x" << std::endl;
 }
 
-const std::map<std::string, std::pair<Function, Function>> lossFuncs({
-        {"V", {V, diffV}},
-        {"Q", {Q, diffQ}},
-        {"Q3", {Q3, diffQ3}},
-        {"Q4", {Q4, diffQ4}},
-        {"L", {L, diffL}},
-        {"S", {S, diffS}},
-        {"E", {E, diffE}},});
-
 int main(int argc, char* argv[]) {
     if (argc != 7) {
         printUsage(argv[0]);
@@ -54,13 +45,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    if (lossFuncs.find(func) == lossFuncs.end()) {
-        std::cerr << "Unable to locate function " << func << std::endl;
-        printUsage(argv[0]);
-        return 1;
-    }
-    m.lossFunction(lossFuncionByName(func));
-    m.setC(std::stod(rawC));
+    m.lossFunction(lossFunctionByName(func));
+    m.c(std::stod(rawC));
     m.maximumStepsNumber(std::stoll(rawSteps));
 
     Info i = m.train(objects, classes);

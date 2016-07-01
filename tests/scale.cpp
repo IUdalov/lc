@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE(scaleSample) {
             Vector unscaled = toScale[i];
             unscaleVector(unscaled, factor, offset);
             for (size_t j = 0; j < sample[i].size(); j++) {
-                BOOST_CHECK(isSame(sample[i][j], unscaled[j]));
+                BOOST_CHECK(compare(sample[i][j], unscaled[j]));
             }
         }
     }
