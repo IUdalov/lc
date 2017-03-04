@@ -9,21 +9,15 @@ BOOST_AUTO_TEST_CASE(simpleTrainWithQ) {
     size_t objects = 10;
     size_t features = 3;
     size_t testObjects = 100;
-    Objects data, testData;
-    Vector classes, testClasses;
 
-    generateNormalData(
-            data,
-            classes,
+    auto train = generateNormalData(
             objects,
             features,
             1, // stddiv
             0.5 // offset
     );
 
-    generateNormalData(
-            testData,
-            testClasses,
+    auto test = generateNormalData(
             testObjects,
             features,
             1, // stddiv
@@ -32,12 +26,13 @@ BOOST_AUTO_TEST_CASE(simpleTrainWithQ) {
     );
 
     Model model;
-    model.lossFunction(LossFunction::Q);
+    model.lossFunction(loss_functions::Q);
     model.c(0.01);
-    model.classifier({1, 2, 3});
-    double errorsBefore = checkData(model, testData, testClasses);
-    auto info = model.train(data, classes, true, true);
-    double errorsAfter = checkData(model, testData, testClasses);
+    model.precision(0.2);
+    model.classifier({-1, -2, -3});
+    double errorsBefore = checkData(model, test);
+    auto info = model.train(train, true, true);
+    double errorsAfter = checkData(model, test);
     (void)info;
     BOOST_CHECK(errorsBefore >= errorsAfter);
 }

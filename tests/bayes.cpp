@@ -6,17 +6,20 @@
 using namespace lc;
 
 BOOST_AUTO_TEST_CASE(bayes) {
-    std::vector<size_t> testData {10, 50, 100};
-    for(auto t : testData) {
-        Objects data;
-        Vector classes;
-        generateNormalData(data, classes, t, t / 2, 1, 0.3,"BB King");
+    std::vector<size_t> testSpec {10, 50, 100};
+    for(auto t : testSpec) {
+        const auto problem = generateNormalData(t, t / 2, 1, 0.3,"BB King");
 
-        Model m;
-        m.maximumStepsNumber(0);
-        m.train(data, classes);
+        const auto w = naiveBayes(problem);
 
-        double errors = checkData(m, data, classes);
-        BOOST_CHECK(errors < 0.3);
+        size_t errors = 0;
+        for (size_t i = 0; i < problem.entries().size(); i++) {
+            auto res = dot(problem[i].x(), w);
+            if (res * problem[i].y() < 0) { errors++; }
+        }
+
+        double errRate = static_cast<double>(errors) / static_cast<double>(problem.entries().size());
+
+        BOOST_CHECK(errRate < 0.3);
     }
 }

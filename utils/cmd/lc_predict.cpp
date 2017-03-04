@@ -4,37 +4,47 @@
 
 using namespace lc;
 
+namespace {
+
 void printUsage(const std::string progName) {
-    std::cout << "Usage: " << progName << " [options] test_file model_file" << std::endl;
-    std::cout << "Options:" << std::endl;
-    std::cout << "\t-svm - read input file in SVM format" << std::endl;
-    std::cout << "\t-csv - read input file in CSV format." << std::endl;
+    std::cout << "Usage: " << progName << " test_file model_file" << std::endl;
+}
+
+template<typename T>
+void printList(const std::string& name, const T& values) {
+    std::cout << name << ": ";
+    for(const auto& value : values)
+        std::cout << value << " ";
+    std::cout << std::endl;
+}
+
 }
 
 int main(int argc, char* argv[]) {
-    if (argc != 4) {
+    if (argc != 3) {
         printUsage(argv[0]);
         return 1;
     }
 
-    Objects objects;
-    Vector classes;
-    std::string inputFormat(argv[1]);
-
-    if (inputFormat == "-svm") {
-        readSVMFile(argv[2], objects, classes);
-    } else if (inputFormat == "-csv") {
-        readCSVFile(argv[2], objects, classes);
-    } else {
-        printUsage(argv[0]);
-        return 1;
-    }
+    auto p = readProblem(argv[1]);
 
     Model m;
-    m.load(argv[3]);
+    m.load(argv[2]);
+
+    std::vector<int> classes(p.entries().size());
+    Vector predicted(p.entries().size());
+    size_t errors = 0;
+
+    for(size_t i = 0; i < p.entries().size(); i++) {
+        predicted[i] = m.predict(p[i].x());
+        if (predicted[i] != p[i].y()) {errors++;}
+        classes[i] = p[i].y();
+    }
 
 
-    double errors =checkData(m, objects, classes);
-    std::cout << "Assurance: " << (1 - errors) << std::endl;
+    printList("Real", classes);
+    printList("Predicted", predicted);
+
+    std::cout << "Assurance: " << (1 - static_cast<double>(errors)/ static_cast<double>(predicted.size())) << std::endl;
     return 0;
 }
