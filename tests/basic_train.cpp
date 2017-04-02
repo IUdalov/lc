@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE(simpleTrainWithQ) {
     auto info = model.train(train, true, true);
     double errorsAfter = checkData(model, test);
     (void)info;
-    BOOST_CHECK(errorsBefore >= errorsAfter);
+    BOOST_CHECK_GE(errorsBefore, errorsAfter);
 }
 
 /*

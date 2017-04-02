@@ -5,6 +5,18 @@
 
 using namespace lc;
 
+BOOST_AUTO_TEST_CASE(readObjects) {
+    std::stringstream ss;
+    ss << "+1 1:1 2:2 3:3" << std::endl;
+    ss << "-1 2:-1" << std::endl;
+
+    Problem p = readProblem(ss);
+    BOOST_CHECK_EQUAL(p.entries().size(), 2);
+
+    BOOST_CHECK_EQUAL(p[0], Entry( 1, {1,  2, 3}));
+    BOOST_CHECK_EQUAL(p[1], Entry(-1, {0, -1, 0}));
+}
+
 BOOST_AUTO_TEST_CASE(readWriteData) {
     std::vector<Entry> src;
     src.emplace_back(Entry(1, {1, 2, 3}));

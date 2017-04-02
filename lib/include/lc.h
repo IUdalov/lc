@@ -49,7 +49,7 @@ inline std::ostream& operator<<(std::ostream& out, const Entry& e) {
     out << (e.y() == 1 ? "+1" : "-1");
     for (size_t i = 0; i < e.x().size(); i++)
         if (e[i] != 0)
-            out << " " << i << ":" << e[i];
+            out << " " << (i + 1) << ":" << e[i];
 
     out << std::endl;
     return out;
@@ -80,6 +80,14 @@ private:
     Problem(const Problem&) = delete;
 };
 
+inline std::ostream& operator<<(std::ostream& out, const Problem& p) {
+    out << "Problem {" << std::endl;
+    out << "\tobjects = " << p.entries().size() << std::endl;
+    out << "\tfeatures = " << p[0].x().size() << std::endl;
+    out << "}" << std::endl;
+    return out;
+}
+
 struct Info {
     size_t objects;
     size_t features;
@@ -87,13 +95,26 @@ struct Info {
     double c;
     double precision;
     Vector w;
-
-    Info();
 };
+
+inline std::ostream& operator<<(std::ostream& out, const Info& i) {
+    out << "Info {" << std::endl;
+    out << "\tobjects = " << i.objects << std::endl;
+    out << "\tfeatures = " << i.features << std::endl;
+    out << "\tsteps = " << i.steps << std::endl;
+    out << "\tc = " << i.c << std::endl;
+    out << "\tprecision = " << i.precision << std::endl;
+    out << "\tw =";
+    for(const auto& o : i.w) out << " " << o;
+    out << std::endl << "}" << std::endl;
+    return out;
+}
+
 
 class Model {
 public:
     Model();
+    Model(int argc, char* argv[]);
 
     Info train(
             const Problem& P,
@@ -105,7 +126,9 @@ public:
     void save(const std::string& path);
     void load(const std::string& path);
 
-    //TODO: Bunch of dummy methods
+    operator bool() const { return isGood_; };
+
+    // Setters/getters
     void lossFunction(const LossFunction& lf) { lf_ = lf; };
     const LossFunction& lossFunction() { return lf_; };
 
@@ -134,6 +157,7 @@ public:
     void toClassifier(const Problem& p);
 
 private:
+    bool isGood_;
     Vector w_;
     Vector margins_;
 

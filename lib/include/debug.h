@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#ifdef NDEBUG
+#ifdef NDEBUGw
 #   define DEBUG if (false) std::cout
 #else
-#   define DEBUG std::cout << __FILE__ << ":"  << __FUNCTION__ << ":" << __LINE__ << " "
+#   define DEBUG std::cout << __FUNCTION__ << ":" << __LINE__ << " "
 #endif

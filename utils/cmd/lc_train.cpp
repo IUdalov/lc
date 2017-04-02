@@ -1,7 +1,8 @@
-#include <iostream>
-#include <map>
+
 #include <lc.h>
 #include <utils/utils.h>
+#include <iostream>
+#include <map>
 
 using namespace lc;
 
@@ -31,7 +32,7 @@ int main(int argc, char* argv[]) {
     Model m;
 
     auto p = readProblem(trainingFile);
-
+    std::cout << p;
     m.lossFunction(lossFunctionByName(func));
     m.c(std::stod(rawC));
     m.maximumStepsNumber(std::stoul(rawSteps));
@@ -39,14 +40,9 @@ int main(int argc, char* argv[]) {
     Info i = m.train(p);
     m.save(modelFile);
 
-    std::cout << "Info" << std::endl;
-    std::cout << "objects: " << i.objects << std::endl;
-    std::cout << "features: " << i.features << std::endl;
-    std::cout << "c: " << i.c << std::endl;
-    std::cout << "steps: " << i.steps << std::endl;
-    std::cout << "precision: " << i.precision << std::endl;
-    std::cout << "w: "; for(auto it : i.w) { std::cout << it << ", "; } std::cout << std::endl;
-    std::cout << "old: "; for(auto it : i.w) { std::cout << it << ", "; } std::cout << std::endl;
+    std::cout << i;
 
     return 0;
 }
+
+

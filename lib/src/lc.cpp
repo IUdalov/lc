@@ -5,12 +5,39 @@
 #include <math.h>
 #include <exception>
 
-const size_t DEFAULT_MAXIMUM_STEPS = 10000;
-const double DEFAULT_PRECISION = 0.00001;
-
 namespace lc {
 
 namespace {
+
+const size_t DEFAULT_MAXIMUM_STEPS = 100;
+const double DEFAULT_PRECISION = 0.00001;
+
+void validate(double v) {
+    (void)v;
+    //if (isnan(v))
+        //throw std::runtime_error("NaN");
+}
+
+void validate(const Vector& v, size_t space) {
+    if (v.size() != space)
+        throw std::runtime_error("Size mismatch");
+
+    for(const auto& e : v)
+        validate(e);
+}
+
+void validate(const Problem& p) {
+    if (p.entries().empty())
+        throw std::runtime_error("Problem is empty");
+
+// this checks are quite heavy
+#ifndef NDEBUG
+    size_t space = p[0].size();
+    for(const auto& e : p.entries())
+        validate(e.x(), space);
+
+#endif // NDEBUG
+}
 
 std::vector<Vector> createCache(const Problem& p, const Kernel &kernel) {
     std::vector<Vector> cache;
@@ -32,62 +59,57 @@ std::vector<Vector> createCache(const Problem& p, const Kernel &kernel) {
 
 } // namespace
 
-Info::Info()
-        : objects(0),
-          features(0),
-          steps(0),
-          c(-1),
-          precision(0),
-          w({}) {
-}
-
 Model::Model()
-        : lf_(loss_functions::Q),
+        : isGood_(true),
+          lf_(loss_functions::Q),
           k_(kernels::Homogenous1),
           c_(1),
           maximumSteps_(DEFAULT_MAXIMUM_STEPS),
           precision_(DEFAULT_PRECISION) {
 }
 
+Model::Model(int argc, char* argv[])
+    : Model() {
+    (void)argc;
+    (void)argv;
+}
+
 Info Model::train(
         const Problem& rawProblem,
         bool skipBayes,
         bool skipScale) {
-    if (rawProblem.entries().empty()) {
-        throw std::runtime_error("Problem doesn't have entries");
-    }
-
-    i_.objects = rawProblem.entries().size();
-    i_.features = rawProblem[0].x().size();
-    i_.c = c_;
-
+    validate(rawProblem);
     Problem problem = rawProblem.dup();
+
+    i_.objects = problem.entries().size();
+    i_.features = problem[0].x().size();
+    i_.c = c_;
 
     Vector factor;
     Vector offset;
-    if (!skipScale) {
+
+    if (!skipScale)
         scaleData(problem, 1, factor, offset);
-    }
 
-    if (!skipBayes) {
+    if (!skipBayes)
         w_ = naiveBayes(problem);
-    }
 
-    if (!w_.empty()) {
+    if (!w_.empty())
         toMargins(problem);
-    }
 
-    if (margins_.empty()) {
+    if (margins_.empty())
         margins_.assign(problem.entries().size(), 0.5);
-    }
+
     Vector marginsWas(margins_.size(), 100);
     auto cache = createCache(problem, k_);
 
     DEBUG << "Train with function " << lf_.name() << " and C " << c_ << std::endl;
     for(i_.steps = 0; i_.steps < maximumSteps_; i_.steps++) {
-        if (distance(margins_, marginsWas) < precision_)
+        i_.precision = distance(margins_, marginsWas);
+        validate(i_.precision);
+        if (i_.precision < precision_)
             break;
-
+        DEBUG << i_.steps << std::endl;
         marginsWas = margins_;
         for(std::size_t k = 0; k < margins_.size(); k++) {
             double tmp = margins_[k];
@@ -101,13 +123,11 @@ Info Model::train(
 
     toClassifier(problem);
 
-    if (!skipScale) {
+    if (!skipScale)
         unscaleVector(w_, factor, offset);
-    }
-    i_.precision = distance(margins_, marginsWas);
+
     i_.w = w_;
-    DEBUG << "Model is ready!" << std::endl;
-    DEBUG << "Stopped with precision " << i_.precision << " after " << i_.steps << " steps" << std::endl;
+    DEBUG << "Stopped with " << i_;
 
     return i_;
 }
@@ -120,8 +140,8 @@ double Model::predict(const Vector& value) const {
 }
 
 void Model::toMargins(const Problem& p) {
-    if (w_.empty() || p.entries().empty())
-        throw std::runtime_error("Unable to create Margins.\nModel was not configured");
+    DEBUG << std::endl;
+    validate(p);
 
     margins_.assign(p.entries().size(), 0);
     for(size_t i = 0; i < p.entries().size(); i++) {
@@ -130,8 +150,8 @@ void Model::toMargins(const Problem& p) {
 }
 
 void Model::toClassifier(const Problem& p) {
-    if (margins_.empty() || p.entries().empty())
-        throw std::runtime_error("Model is not configured");
+    DEBUG << std::endl;
+    validate(p);
 
     size_t n = p[0].x().size();
     w_.assign(n, 0);
@@ -145,10 +165,9 @@ void Model::toClassifier(const Problem& p) {
 }
 
 Vector naiveBayes(const Problem& p) {
-    if (p.entries().empty())
-        throw std::runtime_error("Model is not configured");
-
     DEBUG << "Build bayes approximation" << std::endl;
+    validate(p);
+
     size_t n = p[0].x().size();
 
     size_t p1 = 0;
@@ -189,12 +208,13 @@ Vector naiveBayes(const Problem& p) {
         }
     }
 
-    DEBUG << "Done" << std::endl;
     return w;
 }
 
 void scaleData(Problem& p, double scaleValue, Vector& factor, Vector& offset) {
     DEBUG << "Scaling objects" << std::endl;
+    validate(p);
+
     // let's scale space X -> X'
     // x' = M(x + v)
     // x = (M^-1)x' - v
@@ -211,22 +231,25 @@ void scaleData(Problem& p, double scaleValue, Vector& factor, Vector& offset) {
     Vector max(n, std::numeric_limits<double>::lowest());
 
     for(size_t i = 0; i < l; i++) {
-        for(size_t j = 0; j < n; j ++) {
+        for(size_t j = 0; j < n; j++) {
             if (p[i][j] < min[j]) min[j] = p[i][j];
             if (p[i][j] > max[j]) max[j] = p[i][j];
         }
     }
 
     for(size_t j = 0; j < n; j++) {
-        factor[j] = scaleValue / (max[j] - min[j]);
+        if (max[j] - min[j] <= std::numeric_limits<double>::epsilon())
+            factor[j] = scaleValue;
+        else
+            factor[j] = scaleValue / (max[j] - min[j]);
+
         offset[j] = - (max[j] + min[j]) / 2;
     }
-    for(size_t i = 0; i < l; i++) {
-        for(size_t j = 0; j < n; j ++) {
+    for(size_t i = 0; i < l; i++)
+        for(size_t j = 0; j < n; j ++)
             p[i][j] = (p[i][j] + offset[j]) * factor[j];
-        }
-    }
-    DEBUG << "Done" << std::endl;
+
+    validate(p);
 }
 
 void unscaleVector(Vector& v, const Vector& factor, const Vector& offset) {
@@ -240,6 +263,5 @@ void unscaleVector(Vector& v, const Vector& factor, const Vector& offset) {
         v[i] = v[i] / factor[i] - offset[i];
     }
 }
-
 
 } // namespace lc

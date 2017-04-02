@@ -5,7 +5,7 @@
 namespace lc {
 
 typedef std::vector<double> Vector;
-typedef std::vector<Vector> Objects;
+// typedef std::vector<Vector> Objects;
 
 // Malicious --------------------------------------------------------------
 double dot(const Vector& lf, const Vector& rf);
