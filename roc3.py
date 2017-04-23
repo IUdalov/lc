@@ -10,13 +10,14 @@ import numpy as np
 import os
 import subprocess
 import sys
+import math
 
-# LFS = ["V"]
-#STEPS = [0, 10]
-#CONSTANTS = [1]
-LFS = ["V", "Q", "Q3", "Q4"]
-STEPS = [0, 10, 100] #, 1000]
-CONSTANTS = [1, 0.1, 0.01, 0.001]
+#LFS = ["V", "Q"]
+#STEPS = [5, 10]
+#CONSTANTS = [1] #, 0.1]
+LFS = ["V", "Q"] # , "Q3"]
+STEPS = [10, 50, 100] #, 1000]
+CONSTANTS = [1, 0.1, 0.01] #, 0.001]
 
 LC_TRAIN = "bin/lc-train"
 LC_PREDICT = "bin/lc-predict"
@@ -26,7 +27,7 @@ COLORS = ['darkorange', 'cyan', 'indigo', 'seagreen', 'yellow', 'blue', "green",
 
 ROC_DIR = "roc3"
 DATA_DIR = "data2"
-TMP_DIR = "tmp"
+TMP_DIR = "/tmp"
 
 # utils
 def mkdir(directory):
@@ -38,7 +39,7 @@ def run(cmd):
 
 def tmp_file():
     tmp_file.counter += 1
-    return TMP_DIR + "/tmp" +  str(tmp_file.counter)
+    return TMP_DIR + "/roc3" +  str(tmp_file.counter)
 tmp_file.counter = 0
 
 def tmp_file_with_list(ls):
@@ -58,7 +59,7 @@ def roc(experiments, name, output):
     for index, e in enumerate(experiments):
         fpr, tpr, _ = roc_curve(e.labels, e.values)
         roc_auc = auc(fpr, tpr)
-        plt.plot(fpr, tpr, color=COLORS[index], lw=lw, label= e.str() + ' (area = %0.5f)' % roc_auc)
+        plt.plot(fpr, tpr, color=COLORS[index], lw=lw, label= e.str() + ' (AUC = %0.5f)' % roc_auc)
 
     plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
     plt.xlim([0.0, 1.0])
@@ -85,6 +86,80 @@ def grouped_roc(exp, name, predicate):
 
     except:
         print("\tUnexpected error: ", sys.exc_info()[0], exp)
+
+def grouped_by_ms(all, dataset_name):
+    print("Grouping by max steps")
+
+    tag = "by_ms"
+    index = dict()
+    init = None
+    for e in all:
+        if e.method == "lc":
+            key = "lf_{0}_c_{1}".format(e.lf, e.c)
+            ls = index.get(key, [])
+            ls.append(e)
+            index[key] = ls
+        elif e.method == "bayes":
+            init = e
+
+    for key, exps in index.items():
+        exps.append(init)
+        if exps[0].lf == "V":
+            for e in all:
+                if e.c == exps[0].c and e.method == "svm":
+                    exps.append(e)
+        roc(exps, \
+            "Grouped by max steps {0}".format(key), \
+            "{0}/{1}_{2}_{3}.png".format(ROC_DIR, dataset_name,tag, key))
+
+def grouped_by_c(all, dataset_name):
+    print("Grouping by C")
+    tag = "by_c"
+    index = dict()
+    init = None
+    for e in all:
+        if e.method == "lc":
+            key = "lf_{0}_ms_{1}".format(e.lf, e.max_steps)
+            ls = index.get(key, [])
+            ls.append(e)
+            index[key] = ls
+        elif e.method == "bayes":
+            init = e
+
+    for key, exps in index.items():
+        exps.append(init)
+        if exps[0].lf == "V":
+            for e in all:
+                if e.method == "svm":
+                    exps.append(e)
+        roc(exps, \
+            "Grouped by C {0}".format(key), \
+            "{0}/{1}_{2}_{3}.png".format(ROC_DIR, dataset_name, tag, key))
+
+
+def grouped_by_lf(all, dataset_name):
+    print("Grouping by Loss Function")
+    tag = "by_lf"
+    index = dict()
+    init = None
+    for e in all:
+        if e.method == "lc":
+            key = "c_{0}_ms_{1}".format(e.c, e.max_steps)
+            ls = index.get(key, [])
+            ls.append(e)
+            index[key] = ls
+        elif e.method == "bayes":
+            init = e
+
+    for key, exps in index.items():
+        exps.append(init)
+        if exps[0].lf == "V":
+            for e in all:
+                if e.method == "svm" and  e.c == exps[0].c:
+                    exps.append(e)
+        roc(exps, \
+            "Grouped by C {0}".format(key), \
+            "{0}/{1}_{2}_{3}.png".format(ROC_DIR, dataset_name, tag, key))
 
 # data manipulation
 def parse_object(object):
@@ -182,31 +257,51 @@ class Experiment:
             self.labels += l
             self.values += v
         # roc([self], self.id, ROC_DIR + "/" + self.id + ".png")
-
         return self.labels, self.values
 
+    def verify(self):
+        for v in self.values:
+            if math.isnan(v):
+                return False
+        return True
+
     def str(self):
-        return basename(self.dataset) + " " \
-                + self.method \
-                + " lf: {0}, c: {1}, steps: {2}".format(self.lf, self.c, self.max_steps)
+        if self.method == "lc":
+            tag = "lf: {0}, c: {1}, steps: {2}".format(self.lf, self.c, self.max_steps)
+        elif self.method == "svm":
+            tag = "c: {0}".format(self.c)
+        elif self.method == "bayes":
+            tag = ""
+        else:
+            print("\n\n\n\t\t\tError in type")
+            raise Exception("Malformed experiment")
+        return self.method + " " + tag
 
 def run_on_dataset(ds):
     mkdir(ROC_DIR)
     mkdir(TMP_DIR)
     all_experiments = []
+    junk_experiments = []
     for experiment in experiments(ds):
         try:
             experiment.perform()
-            all_experiments.append(experiment)
+            if experiment.verify():
+                all_experiments.append(experiment)
+            else:
+                junk_experiments.append(experiment)
+
         except ValueError:
             print("\tCould not convert data: ", experiment)
-        except:
-            print("\tUnexpected error: ", sys.exc_info()[0], experiment)
+        #except:
+        #    print("\tUnexpected error: ", sys.exc_info()[0], experiment)
 
     dataset_name = basename(ds)
-    grouped_roc(all_experiments, "%s_by_ms" % dataset_name, lambda e: "lf{0}_c{1}".format(e.lf, e.c))
-    grouped_roc(all_experiments, "%s_by_c" % dataset_name,  lambda e: "lf{0}_ms{1}".format(e.lf, e.max_steps))
-    grouped_roc(all_experiments, "%s_by_lf" % dataset_name, lambda e: "c{0}_ms{1}".format(e.c, e.max_steps))
+    grouped_by_ms(all_experiments, dataset_name)
+    grouped_by_c(all_experiments, dataset_name)
+    grouped_by_lf(all_experiments, dataset_name)
+
+    for e in junk_experiments:
+        print("BROKEN {0}".format(e.str()))
 
 
 def datasets(data_dir):
@@ -217,9 +312,13 @@ def datasets(data_dir):
 
 
 def experiments(ds):
+    yield Experiment(ds, "V", 1, 0, method="bayes")
+
+    # for c in CONSTANTS:
+    #    yield Experiment(ds, "V", c, 0, method="svm")
+
     for c in CONSTANTS:
         for ms in STEPS:
-            yield Experiment(ds, "V", c, ms, method="svm")
             for lf in LFS:
                 yield Experiment(ds, lf, c, ms)
 

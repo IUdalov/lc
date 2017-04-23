@@ -31,7 +31,7 @@ Problem readProblem(std::istream& content) {
 
     std::string line;
     Problem problem;
-    std::regex tokenRegex("[0-9\\+\\-\\.:]+");
+    std::regex tokenRegex("[e0-9\\+\\-\\.:]+");
 
     while (std::getline(content, line)) {
         auto token = std::sregex_iterator(line.begin(), line.end(), tokenRegex);
