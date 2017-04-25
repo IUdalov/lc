@@ -10,21 +10,6 @@
 
 namespace lc {
 
-LossFunction lossFunctionByName(const std::string& name) {
-    static const std::map<std::string, LossFunction> nameToLF = {
-            {"V",  loss_functions::V},
-            {"Q",  loss_functions::Q},
-            {"Q3", loss_functions::Q3},
-            {"Q4", loss_functions::Q4},
-            {"L",  loss_functions::L},
-            {"S",  loss_functions::S},
-            {"E",  loss_functions::E}};
-    auto it = nameToLF.find(name);
-    if (it == std::end(nameToLF))
-        throw std::runtime_error("No such function " + name);
-    return it->second;
-}
-
 Problem readProblem(std::istream& content) {
     if (!content)
         throw std::runtime_error("malformed ifstream");
@@ -108,26 +93,6 @@ Problem generateNormalData(size_t objects,
         res.add(Entry(oCount % 2 == 0 ? 1 : -1, std::move(tempFeatures)));
     }
     return res;
-}
-
-void logInfoToFile(std::vector<Info> stats, std::string path) {
-    std::ofstream log;
-    log.open(path);
-    int c = 0;
-    for (auto i : stats) {
-        c++;
-        log << "Exp #" << c << " {" << std::endl;
-        log << "\tobjects:      " << i.objects << std::endl;
-        log << "\tfeatures:     " << i.features << std::endl;
-        log << "\tsteps:        " << i.steps << std::endl;
-        log << "\tprecision:    " << i.precision << std::endl;
-        log << "\tc:            " << i.c << std::endl;
-        log << "\tw:            ";
-        for (auto wi : i.w) log << wi << ", ";
-        log << std::endl;
-        log << "}" << std::endl << std::endl;
-    }
-    log.close();
 }
 
 } // namespace lc

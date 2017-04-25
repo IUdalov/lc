@@ -27,10 +27,10 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    std::string data =  argv[1];
+    std::string inp =  argv[1];
     std::string model = argv[2];
-    std::string output =argv[3];
-    auto p = readProblem(data);
+    std::string output = argv[3];
+    auto p = inp == "stdin" ? readProblem(std::cin): readProblem(inp);
 
     Model m;
     m.load(model);

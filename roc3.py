@@ -12,10 +12,17 @@ import subprocess
 import sys
 import math
 
-#LFS = ["V", "Q"]
-#STEPS = [5, 10]
-#CONSTANTS = [1] #, 0.1]
-LFS = ["V", "Q"] # , "Q3"]
+LFS = {
+    #"X1_5": "(1 - x)^1/2",
+    "X":    "1 - x",
+    "X3_2": "(1 - x)^3/2",
+    "X2":   "(1 - x)^2",
+    "X3":   "(1 - x)^3",
+    "X4":   "(1 - x)^4",
+    "E":    "exp(-x)",
+    "S":    "2 * (1  + e^m)^-1",
+    "L":    "log2(1 + e^-m)"
+}
 STEPS = [10, 50, 100] #, 1000]
 CONSTANTS = [1, 0.1, 0.01] #, 0.001]
 
@@ -104,7 +111,7 @@ def grouped_by_ms(all, dataset_name):
 
     for key, exps in index.items():
         exps.append(init)
-        if exps[0].lf == "V":
+        if exps[0].lf == "X":
             for e in all:
                 if e.c == exps[0].c and e.method == "svm":
                     exps.append(e)
@@ -128,7 +135,7 @@ def grouped_by_c(all, dataset_name):
 
     for key, exps in index.items():
         exps.append(init)
-        if exps[0].lf == "V":
+        if exps[0].lf == "X":
             for e in all:
                 if e.method == "svm":
                     exps.append(e)
@@ -153,7 +160,7 @@ def grouped_by_lf(all, dataset_name):
 
     for key, exps in index.items():
         exps.append(init)
-        if exps[0].lf == "V":
+        if exps[0].lf == "X":
             for e in all:
                 if e.method == "svm" and  e.c == exps[0].c:
                     exps.append(e)
@@ -178,10 +185,11 @@ def parse_object(object):
     return c, features
 
 class Experiment:
-    def __init__(self, dataset, lf, c, max_steps, method="lc"):
+    def __init__(self, dataset, lf, pretty_lf, c, max_steps, method="lc"):
         self.method = method
         self.dataset = dataset
         self.lf = lf
+        self.pretty_lf = pretty_lf
         self.c = c
         self.max_steps = max_steps
 
@@ -267,7 +275,7 @@ class Experiment:
 
     def str(self):
         if self.method == "lc":
-            tag = "lf: {0}, c: {1}, steps: {2}".format(self.lf, self.c, self.max_steps)
+            tag = "lf: {0}, c: {1}, steps: {2}".format(self.pretty_lf, self.c, self.max_steps)
         elif self.method == "svm":
             tag = "c: {0}".format(self.c)
         elif self.method == "bayes":
@@ -312,15 +320,15 @@ def datasets(data_dir):
 
 
 def experiments(ds):
-    yield Experiment(ds, "V", 1, 0, method="bayes")
+    yield Experiment(ds, "V", "", 1, 0, method="bayes")
 
-    # for c in CONSTANTS:
-    #    yield Experiment(ds, "V", c, 0, method="svm")
+    #for c in CONSTANTS:
+    #    yield Experiment(ds, "V", "", c, 0, method="svm")
 
     for c in CONSTANTS:
         for ms in STEPS:
-            for lf in LFS:
-                yield Experiment(ds, lf, c, ms)
+            for lf, pretty_lf in LFS.items():
+                yield Experiment(ds, lf, pretty_lf, c, ms)
 
 if __name__ == '__main__':
     args = sys.argv[1:]

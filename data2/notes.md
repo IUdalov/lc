@@ -29,3 +29,45 @@ segmentaion-GRASS.data
 segmentaion-PATH.data
 segmentaion-SKY.data
 segmentaion-WINDOW.data
+
+
+-segmentaion-BRICKFACE/CEMENT/FOLIAGE/GRASS/PATH/SKY/WINDOW: классификация фотокграфий, один против всех 
+http://archive.ics.uci.edu/ml/datasets/Image+Segmentation
+
+
+ad500: интернет реклама, случайные 500 объектов
+http://archive.ics.uci.edu/ml/datasets/Internet+Advertisements
+
+car0/car1/car2: оценка машин
+Эксперимены по признаку
+unacc vs acc
+unacc vs good
+unacc vs vgood
+http://archive.ics.uci.edu/ml/datasets/Car+Evaluation
+
+heart_scale: тренировачный датасет от одной реализации SVM
+https://github.com/cjlin1/libsvm/blob/master/heart_scale
+
+iris0/iris1/iris2: Ирисы, все попарные сравнения классов
+http://archive.ics.uci.edu/ml/datasets/Iris
+
+liver: Растройства печени, здесь получился большой выигрыш при использовании X2
+http://archive.ics.uci.edu/ml/datasets/Liver+Disorders
+
+mushrooms2000: съедобные/несъедобные грибы случайные 2000 объектов
+http://archive.ics.uci.edu/ml/datasets/Mushroom
+
+sonar: по сигналам отличать маталические объекты от каменных
+http://archive.ics.uci.edu/ml/datasets/Connectionist+Bench+(Sonar,+Mines+vs.+Rocks)
+
+spambase1000: web спам
+http://archive.ics.uci.edu/ml/datasets/Spambase
+
+-uni_grman: кредитные истории в германии
+http://archive.ics.uci.edu/ml/datasets/Statlog+(German+Credit+Data)
+
+wine0/wine1/wine2: происхождение вина, каждый с каждым
+http://archive.ics.uci.edu/ml/datasets/Wine
+
+cancer-wisconsin/wdbc/wpbc: 3 датасета про рак груди
+http://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29

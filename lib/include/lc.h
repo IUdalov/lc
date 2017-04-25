@@ -88,35 +88,12 @@ inline std::ostream& operator<<(std::ostream& out, const Problem& p) {
     return out;
 }
 
-struct Info {
-    size_t objects;
-    size_t features;
-    size_t steps;
-    double c;
-    double precision;
-    Vector w;
-};
-
-inline std::ostream& operator<<(std::ostream& out, const Info& i) {
-    out << "Info {" << std::endl;
-    out << "\tobjects = " << i.objects << std::endl;
-    out << "\tfeatures = " << i.features << std::endl;
-    out << "\tsteps = " << i.steps << std::endl;
-    out << "\tc = " << i.c << std::endl;
-    out << "\tprecision = " << i.precision << std::endl;
-    out << "\tw =";
-    for(const auto& o : i.w) out << " " << o;
-    out << std::endl << "}" << std::endl;
-    return out;
-}
-
-
 class Model {
 public:
     Model();
     Model(int argc, char* argv[]);
 
-    Info train(
+    void train(
             const Problem& P,
             bool skipBayes = false,
             bool skipScale = false);
@@ -150,7 +127,7 @@ public:
     void margins(const Vector& m) { margins_ = m; };
     const Vector& margins() const { return margins_; };
 
-    const Info& i() { return i_; }
+    void log(std::ostream& out);
 
 public:
     void toMargins(const Problem& p);
@@ -168,8 +145,18 @@ private:
     size_t maximumSteps_;
     double precision_;
 
-    Info i_;
+    // For statistic only
+    size_t nobjects_;
+    size_t nfeatures_;
+    double rprecision_;
+    size_t step_;
+    //friend std::ostream& operator<<(std::ostream& out, const Model&);
 };
+
+//inline std::ostream& operator<<(std::ostream& out, const Model&) {
+//    out << "Info { }" << std::endl;
+//    return out;
+//}
 
 Vector naiveBayes(const Problem& p);
 void scaleData(Problem& p, double scaleValue, Vector& factor, Vector& offset);

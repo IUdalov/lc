@@ -17,7 +17,7 @@ BOOST_AUTO_TEST_CASE(margins) {
 
     // ------------------------------------------------------------------------
     BOOST_TEST_MESSAGE("Testing margins with Q");
-    model.lossFunction(loss_functions::Q);
+    model.lossFunction(loss_functions::X2);
 
     model.classifier({-1, 1});
     model.toMargins(p);
@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(margins) {
 
     // ------------------------------------------------------------------------
     BOOST_TEST_MESSAGE("Testing margins with V");
-    model.lossFunction(loss_functions::V);
+    model.lossFunction(loss_functions::X);
 
     model.classifier({-1, 1});
     model.toMargins(p);

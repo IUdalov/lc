@@ -13,9 +13,8 @@ const size_t DEFAULT_MAXIMUM_STEPS = 100;
 const double DEFAULT_PRECISION = 0.00001;
 
 void validate(double v) {
-    (void)v;
-    //if (isnan(v))
-        //throw std::runtime_error("NaN");
+    if (isnan(v))
+        throw std::runtime_error("NaN");
 }
 
 void validate(const Vector& v, size_t space) {
@@ -61,7 +60,7 @@ std::vector<Vector> createCache(const Problem& p, const Kernel &kernel) {
 
 Model::Model()
         : isGood_(true),
-          lf_(loss_functions::Q),
+          lf_(loss_functions::X),
           k_(kernels::Homogenous1),
           c_(1),
           maximumSteps_(DEFAULT_MAXIMUM_STEPS),
@@ -74,16 +73,15 @@ Model::Model(int argc, char* argv[])
     (void)argv;
 }
 
-Info Model::train(
+void Model::train(
         const Problem& rawProblem,
         bool skipBayes,
         bool skipScale) {
     validate(rawProblem);
     Problem problem = rawProblem.dup();
 
-    i_.objects = problem.entries().size();
-    i_.features = problem[0].x().size();
-    i_.c = c_;
+    nobjects_ = problem.entries().size();
+    nfeatures_ = problem[0].x().size();
 
     Vector factor;
     Vector offset;
@@ -104,12 +102,12 @@ Info Model::train(
     auto cache = createCache(problem, k_);
 
     DEBUG << "Train with function " << lf_.name() << " and C " << c_ << std::endl;
-    for(i_.steps = 0; i_.steps < maximumSteps_; i_.steps++) {
-        i_.precision = distance(margins_, marginsWas);
-        validate(i_.precision);
-        if (i_.precision < precision_)
+    for(step_ = 0; step_ < maximumSteps_; step_++) {
+        rprecision_ = distance(margins_, marginsWas);
+        validate(rprecision_);
+        if (rprecision_ < precision_)
             break;
-        DEBUG << i_.steps << std::endl;
+
         marginsWas = margins_;
         for(std::size_t k = 0; k < margins_.size(); k++) {
             double tmp = margins_[k];
@@ -126,10 +124,7 @@ Info Model::train(
     if (!skipScale)
         unscaleVector(w_, factor, offset);
 
-    i_.w = w_;
-    DEBUG << "Stopped with " << i_;
-
-    return i_;
+    DEBUG << "Stopped with steps: " << step_ << " precision: " << precision_ << std::endl;
 }
 
 double Model::predict(const Vector& value) const {
@@ -162,6 +157,18 @@ void Model::toClassifier(const Problem& p) {
             w_[k] += (-c_) * diffI * p[i][k] * p[i].y();
         }
     }
+}
+
+void Model::log(std::ostream& out) {
+    out << "Model {" << std::endl;
+    out << "\tobjects = " << nobjects_ << std::endl;
+    out << "\tfeatures = " << nfeatures_ << std::endl;
+    out << "\tsteps = " << step_ << std::endl;
+    out << "\tc = " << c_ << std::endl;
+    out << "\tprecision = " << rprecision_ << std::endl;
+    out << "\tw =";
+    for(const auto& o : w_) out << " " << o;
+    out << std::endl << "}" << std::endl;
 }
 
 Vector naiveBayes(const Problem& p) {

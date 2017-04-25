@@ -7,7 +7,7 @@
 using namespace lc;
 
 void printUsage(const std::string progName) {
-    std::cout << "Usage: " << progName << " [function] c max_steps training_file model_file" << std::endl;
+    std::cout << "Usage: " << progName << " function c max_steps training_file model_file" << std::endl;
     std::cout << "Functions:" << std::endl;
     std::cout << "\tV(x)  = max(1-x, 0)" << std::endl;
     std::cout << "\tQ(x)  = {(1-x)^2, x < 1; 0, x >= 1}" << std::endl;
@@ -33,14 +33,14 @@ int main(int argc, char* argv[]) {
 
     auto p = readProblem(trainingFile);
     std::cout << p;
-    m.lossFunction(lossFunctionByName(func));
+    m.lossFunction(loss_functions::fromName(func));
     m.c(std::stod(rawC));
     m.maximumStepsNumber(std::stoul(rawSteps));
 
-    Info i = m.train(p);
+    m.train(p);
     m.save(modelFile);
 
-    std::cout << i;
+    m.log(std::cout);
 
     return 0;
 }

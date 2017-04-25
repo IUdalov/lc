@@ -26,14 +26,14 @@ BOOST_AUTO_TEST_CASE(simpleTrainWithQ) {
     );
 
     Model model;
-    model.lossFunction(loss_functions::Q);
+    model.lossFunction(loss_functions::X2);
     model.c(0.01);
     model.precision(0.2);
     model.classifier({-1, -2, -3});
     double errorsBefore = checkData(model, test);
-    auto info = model.train(train, true, true);
+    model.train(train, true, true);
     double errorsAfter = checkData(model, test);
-    (void)info;
+
     BOOST_CHECK_GE(errorsBefore, errorsAfter);
 }
 

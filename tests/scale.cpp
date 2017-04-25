@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(trainWithScale) {
     );
 
     Model model;
-    auto info = model.train(train);
+    model.train(train);
     double errors = checkData(model, test);
     BOOST_CHECK(errors <= 2.3);
 }
