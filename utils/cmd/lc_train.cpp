@@ -2,6 +2,7 @@
 #include <lc.h>
 #include <utils/utils.h>
 #include <iostream>
+#include <fstream>
 #include <map>
 
 using namespace lc;
@@ -38,7 +39,8 @@ int main(int argc, char* argv[]) {
     m.maximumStepsNumber(std::stoul(rawSteps));
 
     m.train(p);
-    m.save(modelFile);
+    std::ofstream out(modelFile);
+    out << m;
 
     m.log(std::cout);
 

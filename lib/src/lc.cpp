@@ -1,8 +1,10 @@
 #include "lc.h"
 
+#include "bayes.h"
 #include "debug.h"
 
-#include <math.h>
+#include <cstdlib>
+#include <cmath>
 #include <exception>
 
 namespace lc {
@@ -10,33 +12,7 @@ namespace lc {
 namespace {
 
 const size_t DEFAULT_MAXIMUM_STEPS = 100;
-const double DEFAULT_PRECISION = 0.00001;
-
-void validate(double v) {
-    if (isnan(v))
-        throw std::runtime_error("NaN");
-}
-
-void validate(const Vector& v, size_t space) {
-    if (v.size() != space)
-        throw std::runtime_error("Size mismatch");
-
-    for(const auto& e : v)
-        validate(e);
-}
-
-void validate(const Problem& p) {
-    if (p.entries().empty())
-        throw std::runtime_error("Problem is empty");
-
-// this checks are quite heavy
-#ifndef NDEBUG
-    size_t space = p[0].size();
-    for(const auto& e : p.entries())
-        validate(e.x(), space);
-
-#endif // NDEBUG
-}
+const double DEFAULT_PRECISION = 0;//std::numeric_limits<double>::epsilon();
 
 std::vector<Vector> createCache(const Problem& p, const Kernel &kernel) {
     std::vector<Vector> cache;
@@ -59,44 +35,38 @@ std::vector<Vector> createCache(const Problem& p, const Kernel &kernel) {
 } // namespace
 
 Model::Model()
-        : isGood_(true),
-          lf_(loss_functions::X),
-          k_(kernels::Homogenous1),
-          c_(1),
-          maximumSteps_(DEFAULT_MAXIMUM_STEPS),
-          precision_(DEFAULT_PRECISION) {
+        : isGood_(true)
+        , oldBayes_(std::getenv("LC_OLD_BAYES") != nullptr)
+        , invertClassifier_(std::getenv("LC_INVERT") != nullptr)
+        , lf_(loss_functions::X)
+        , k_(kernels::Homogenous1)
+        , c_(1)
+        , maximumSteps_(DEFAULT_MAXIMUM_STEPS)
+        , precision_(DEFAULT_PRECISION) {
 }
 
-Model::Model(int argc, char* argv[])
-    : Model() {
-    (void)argc;
-    (void)argv;
-}
-
-void Model::train(
-        const Problem& rawProblem,
-        bool skipBayes,
-        bool skipScale) {
+void Model::train(const Problem& rawProblem) {
     validate(rawProblem);
     Problem problem = rawProblem.dup();
 
     nobjects_ = problem.entries().size();
     nfeatures_ = problem[0].x().size();
 
-    Vector factor;
-    Vector offset;
+    scaler_ = std::make_unique<Scaler>(problem);
+    scaler_->apply(problem);
 
-    if (!skipScale)
-        scaleData(problem, 1, factor, offset);
+    w_ = oldBayes_ ? oldNaiveBayes(problem) : naiveBayes(problem);
+    norm(w_);
+    validate(w_, nfeatures_);
 
-    if (!skipBayes)
-        w_ = naiveBayes(problem);
+    if (maximumSteps_ == 0) {
+        DEBUG << "Stopped after naive bayes" << std::endl;
+        return;
+    }
 
-    if (!w_.empty())
-        toMargins(problem);
-
-    if (margins_.empty())
-        margins_.assign(problem.entries().size(), 0.5);
+    toMargins(problem);
+    norm(margins_);
+    validate(margins_, nobjects_);
 
     Vector marginsWas(margins_.size(), 100);
     auto cache = createCache(problem, k_);
@@ -117,21 +87,32 @@ void Model::train(
             }
             margins_[k] = tmp;
         }
+
+        //norm(margins_);
+        validate(margins_, nobjects_);
     }
 
     toClassifier(problem);
-
-    if (!skipScale)
-        unscaleVector(w_, factor, offset);
 
     DEBUG << "Stopped with steps: " << step_ << " precision: " << precision_ << std::endl;
 }
 
 double Model::predict(const Vector& value) const {
-    if (w_.empty() || w_.size() != value.size()) {
+    if (w_.empty() || w_.size() != value.size())
         throw std::runtime_error("Model was not configured");
+
+    Vector copy = value;
+    if (scaler_)
+        scaler_->apply(copy);
+    else
+        DEBUG << "Empty scaler!" << std::endl;
+
+    if (invertClassifier_) {
+        for(auto& e : copy)
+            e = -e;
     }
-    return k_(w_, value);
+
+    return k_(w_, copy);
 }
 
 void Model::toMargins(const Problem& p) {
@@ -139,9 +120,12 @@ void Model::toMargins(const Problem& p) {
     validate(p);
 
     margins_.assign(p.entries().size(), 0);
+    printVector("w_ init", w_);
     for(size_t i = 0; i < p.entries().size(); i++) {
         margins_[i] = k_(w_, p[i].x()) * p[i].y();
     }
+
+    printVector("margins_ from w_", margins_);
 }
 
 void Model::toClassifier(const Problem& p) {
@@ -150,6 +134,7 @@ void Model::toClassifier(const Problem& p) {
 
     size_t n = p[0].x().size();
     w_.assign(n, 0);
+    printVector("margins_ init", margins_);
 
     for(size_t i = 0; i < p.entries().size(); i++) {
         for(size_t k = 0; k < n; k++) {
@@ -157,6 +142,8 @@ void Model::toClassifier(const Problem& p) {
             w_[k] += (-c_) * diffI * p[i][k] * p[i].y();
         }
     }
+
+    printVector("w_ from margins_", w_);
 }
 
 void Model::log(std::ostream& out) {
@@ -169,106 +156,6 @@ void Model::log(std::ostream& out) {
     out << "\tw =";
     for(const auto& o : w_) out << " " << o;
     out << std::endl << "}" << std::endl;
-}
-
-Vector naiveBayes(const Problem& p) {
-    DEBUG << "Build bayes approximation" << std::endl;
-    validate(p);
-
-    size_t n = p[0].x().size();
-
-    size_t p1 = 0;
-    size_t p2 = 0;
-    Vector means1(n, 0.0);
-    Vector means2(n, 0.0);
-    Vector dis1(n, 0.0);
-    Vector dis2(n, 0.0);
-
-    for(size_t j = 0; j < p.entries().size(); j++) {
-        for(size_t i = 0; i < n; i++) {
-            if (p[j].y() == 1) {
-                p1++;
-                means1[i] += p[j][i];
-                dis1[i] += pow(p[j][i], 2);
-            } else {
-                p2++;
-                means2[i] += p[j][i];
-                dis2[i] += pow(p[j][i], 2);
-            }
-        }
-    }
-
-    for(size_t i = n; i < n; i++) {
-        means1[i] = means1[i] / static_cast<double>(p1);
-        dis1[i] = pow(dis1[i] / static_cast<double>(p1), 2) - pow(means1[i], 2);
-
-        means2[i] = means2[i] / static_cast<double>(p2);
-        dis2[i] = pow(dis2[i] / static_cast<double>(p2), 2) - pow(means2[i], 2);
-    }
-
-    Vector w(n, 0);
-    for(size_t j = 0; j < p.entries().size(); j++) {
-        for(size_t i = 0; i < n; i++) {
-            double mean = p[j].y() == 1 ? means1[i] : means2[i];
-            double dis = p[j].y() == 1 ? dis1[i] : dis2[i];
-            w[i] += p[j].y() * (mean / dis);
-        }
-    }
-
-    return w;
-}
-
-void scaleData(Problem& p, double scaleValue, Vector& factor, Vector& offset) {
-    DEBUG << "Scaling objects" << std::endl;
-    validate(p);
-
-    // let's scale space X -> X'
-    // x' = M(x + v)
-    // x = (M^-1)x' - v
-
-    size_t l = p.entries().size();
-    size_t n = p[0].x().size();
-
-    factor.clear();
-    offset.clear();
-    factor.resize(n);
-    offset.resize(n);
-
-    Vector min(n, std::numeric_limits<double>::max());
-    Vector max(n, std::numeric_limits<double>::lowest());
-
-    for(size_t i = 0; i < l; i++) {
-        for(size_t j = 0; j < n; j++) {
-            if (p[i][j] < min[j]) min[j] = p[i][j];
-            if (p[i][j] > max[j]) max[j] = p[i][j];
-        }
-    }
-
-    for(size_t j = 0; j < n; j++) {
-        if (max[j] - min[j] <= std::numeric_limits<double>::epsilon())
-            factor[j] = scaleValue;
-        else
-            factor[j] = scaleValue / (max[j] - min[j]);
-
-        offset[j] = - (max[j] + min[j]) / 2;
-    }
-    for(size_t i = 0; i < l; i++)
-        for(size_t j = 0; j < n; j ++)
-            p[i][j] = (p[i][j] + offset[j]) * factor[j];
-
-    validate(p);
-}
-
-void unscaleVector(Vector& v, const Vector& factor, const Vector& offset) {
-    if (v.empty()) {
-        throw std::runtime_error("Empty vector");
-    }
-    if (v.size() != factor.size() || v.size() != offset.size()) {
-        throw std::runtime_error("Vector doesn't fit to scale");
-    }
-    for(size_t i = 0; i < v.size(); i++) {
-        v[i] = v[i] / factor[i] - offset[i];
-    }
 }
 
 } // namespace lc

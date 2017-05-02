@@ -1,6 +1,6 @@
 #pragma once
 
-#include <linear.h>
+#include <data.h>
 
 #include <vector>
 #include <string>

@@ -18,10 +18,10 @@ BOOST_AUTO_TEST_CASE(scaleSample) {
     p2.add(Entry(0, { 0, -1, -2, -3}));
 
     Problem p3;
-    p3.add(Entry(0, { 0.1,  3}));
-    p3.add(Entry(0, {-0.1,  2}));
-    p3.add(Entry(0, {-.01, -1}));
-    p3.add(Entry(0, {0.01, -3}));
+    p3.add(Entry(0, { 0.1,  0.3}));
+    p3.add(Entry(0, {-0.1,  0.2}));
+    p3.add(Entry(0, {-.01, -0.3}));
+    p3.add(Entry(0, {0.01, -0.2}));
 
     std::vector<Problem> samples;
     samples.emplace_back(std::move(p1));
@@ -29,18 +29,14 @@ BOOST_AUTO_TEST_CASE(scaleSample) {
     samples.emplace_back(std::move(p3));
 
     for(auto& sample : samples) {
-        Vector factor;
-        Vector offset;
-        auto toScale = sample.dup();
-        scaleData(toScale, 1, factor, offset);
+        Scaler r(sample);
+        r.apply(sample);
 
-        for(size_t i = 0; i < sample.entries().size(); i++) {
-            Vector unscaled = toScale[i].x();
-            unscaleVector(unscaled, factor, offset);
-            for (size_t j = 0; j < sample[i].size(); j++) {
-                BOOST_CHECK(compare(sample[i][j], unscaled[j]));
+        for(auto& e : sample.entries())
+            for(auto& elem : e.x()) {
+                BOOST_CHECK_LE(e, 1);
+                BOOST_CHECK_GE(e, -1);
             }
-        }
     }
 }
 

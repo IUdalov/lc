@@ -31,7 +31,7 @@ BOOST_AUTO_TEST_CASE(simpleTrainWithQ) {
     model.precision(0.2);
     model.classifier({-1, -2, -3});
     double errorsBefore = checkData(model, test);
-    model.train(train, true, true);
+    model.train(train);
     double errorsAfter = checkData(model, test);
 
     BOOST_CHECK_GE(errorsBefore, errorsAfter);

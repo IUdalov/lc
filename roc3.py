@@ -13,7 +13,7 @@ import sys
 import math
 
 LFS = {
-    #"X1_5": "(1 - x)^1/2",
+    "X1_5": "(1 - x)^1/2",
     "X":    "1 - x",
     "X3_2": "(1 - x)^3/2",
     "X2":   "(1 - x)^2",
@@ -23,7 +23,8 @@ LFS = {
     "S":    "2 * (1  + e^m)^-1",
     "L":    "log2(1 + e^-m)"
 }
-STEPS = [10, 50, 100] #, 1000]
+KERNELS = []
+STEPS = [1, 5, 10, 50, 100] #, 1000]
 CONSTANTS = [1, 0.1, 0.01] #, 0.001]
 
 LC_TRAIN = "bin/lc-train"
@@ -42,7 +43,8 @@ def mkdir(directory):
         os.makedirs(directory)
 
 def run(cmd):
-    return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print("cmd: " + " ".join(cmd))
+    return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=os.environ)
 
 def tmp_file():
     tmp_file.counter += 1
@@ -300,10 +302,13 @@ def run_on_dataset(ds):
 
         except ValueError:
             print("\tCould not convert data: ", experiment)
+        except Exception:
+            print("\tCould not convert data: ", experiment)
         #except:
         #    print("\tUnexpected error: ", sys.exc_info()[0], experiment)
 
     dataset_name = basename(ds)
+    # roc(all_experiments, dataset_name, "roc3/" + dataset_name + ".png")
     grouped_by_ms(all_experiments, dataset_name)
     grouped_by_c(all_experiments, dataset_name)
     grouped_by_lf(all_experiments, dataset_name)
@@ -320,10 +325,10 @@ def datasets(data_dir):
 
 
 def experiments(ds):
-    yield Experiment(ds, "V", "", 1, 0, method="bayes")
+    yield Experiment(ds, "X", "", 1, 0, method="bayes")
 
-    #for c in CONSTANTS:
-    #    yield Experiment(ds, "V", "", c, 0, method="svm")
+    for c in CONSTANTS:
+        yield Experiment(ds, "X", "", c, 0, method="svm")
 
     for c in CONSTANTS:
         for ms in STEPS:

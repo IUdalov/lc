@@ -27,13 +27,14 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    std::string inp =  argv[1];
+    std::string input =  argv[1];
     std::string model = argv[2];
     std::string output = argv[3];
-    auto p = inp == "stdin" ? readProblem(std::cin): readProblem(inp);
+    auto p = input == "stdin" ? readProblem(std::cin): readProblem(input);
 
     Model m;
-    m.load(model);
+    std::ifstream in(model);
+    in >> m;
 
     std::vector<int> classes(p.entries().size());
     Vector predicted(p.entries().size());

@@ -1,6 +1,6 @@
 #include <boost/test/unit_test.hpp>
 
-#include <lc.h>
+#include <bayes.h>
 #include <utils/utils.h>
 
 using namespace lc;
