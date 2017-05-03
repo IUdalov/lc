@@ -31,7 +31,7 @@ LC_TRAIN = "bin/lc-train"
 LC_PREDICT = "bin/lc-predict"
 SPLITS = 10
 
-COLORS = ['darkorange', 'cyan', 'indigo', 'seagreen', 'yellow', 'blue', "green", "pink", "grey", "purple", "black"]
+COLORS = ['darkorange','cyan', 'indigo', 'seagreen', 'yellow', 'blue', "green", "pink", "grey", "purple", "black"]
 
 ROC_DIR = "roc3"
 DATA_DIR = "data2"
@@ -51,15 +51,19 @@ def tmp_file():
     return TMP_DIR + "/roc3" +  str(tmp_file.counter)
 tmp_file.counter = 0
 
-def tmp_file_with_list(ls):
-    file_path = tmp_file()
-    with open(file_path, "w") as f:
-        for l in ls:
-            f.write("%s" % l)
-    return file_path
-
 def basename(name):
     return name.split("/")[-1].split(".")[0]
+
+def touch_file_with_list(dataset, tag, ls):
+    path = "/tmp/{0}_{1}".format(basename(dataset), tag)
+    if os.path.exists(path):
+        return path
+    with open(path, "w") as f:
+        for l in ls:
+            f.write("%s" % l)
+
+    print("Created " + path)
+    return path
 
 # ROC and graphic
 def roc(experiments, name, output):
@@ -195,8 +199,8 @@ class Experiment:
         self.c = c
         self.max_steps = max_steps
 
-    def train_model_lc(self, objects):
-        train_file = tmp_file_with_list(objects)
+    def train_model_lc(self, objects, tag):
+        train_file = touch_file_with_list(self.dataset, tag, objects)
         model_file = tmp_file()
 
         print("Train " + train_file + " -> " + model_file)
@@ -208,8 +212,8 @@ class Experiment:
 
         return model_file
 
-    def test_model_lc(self, model, objects):
-        test_objects = tmp_file_with_list(objects)
+    def test_model_lc(self, model, objects, tag):
+        test_objects = touch_file_with_list(self.dataset, tag, objects)
         print("Test " + model + " -> " + test_objects)
         res = run([LC_PREDICT, test_objects, model, "stdout"])
         if res.stderr:
@@ -245,14 +249,14 @@ class Experiment:
         values = model.decision_function(to_predict).tolist()
         return labels, values
 
-    def run_on_one_sample(self, train, test):
+    def run_on_one_sample(self, index, train, test):
         if self.method == "svm":
             model = self.train_model_svm(train)
             labels, values = self.test_model_svm(model, test)
             return labels, values
         else:
-            model = self.train_model_lc(train)
-            labels, values = self.test_model_lc(model, test)
+            model = self.train_model_lc(train, "train_%d" % index)
+            labels, values = self.test_model_lc(model, test, "test_%d" % index)
             return labels, values
 
     def perform(self):
@@ -261,11 +265,13 @@ class Experiment:
         print("Samples %s" % len(objects))
         self.labels = []
         self.values = []
+        index = 0
         for train_index, test_index in KFold(n_splits=SPLITS).split(objects):
-            train, test = objects[train_index], objects[test_index]
-            l, v = self.run_on_one_sample(train, test)
+            train, test = objects[train_index], objects[train_index]
+            l, v = self.run_on_one_sample(index, train, test)
             self.labels += l
             self.values += v
+            index += 1
         # roc([self], self.id, ROC_DIR + "/" + self.id + ".png")
         return self.labels, self.values
 
@@ -293,17 +299,17 @@ def run_on_dataset(ds):
     all_experiments = []
     junk_experiments = []
     for experiment in experiments(ds):
-        try:
-            experiment.perform()
-            if experiment.verify():
-                all_experiments.append(experiment)
-            else:
-                junk_experiments.append(experiment)
+        #try:
+        experiment.perform()
+        if experiment.verify():
+            all_experiments.append(experiment)
+        else:
+            junk_experiments.append(experiment)
 
-        except ValueError:
-            print("\tCould not convert data: ", experiment)
-        except Exception:
-            print("\tCould not convert data: ", experiment)
+        # except ValueError:
+        #     print("\tCould not convert data: ", experiment)
+        # except Exception:
+        #     print("\tUnknown exception: ", experiment)
         #except:
         #    print("\tUnexpected error: ", sys.exc_info()[0], experiment)
 
