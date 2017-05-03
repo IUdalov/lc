@@ -12,9 +12,9 @@ class Kernel {
 public:
     Kernel(const std::string& name, std::function<double(const std::vector<double>&, const std::vector<double>&)> kernel):
             name_(name),
-            kernel_(kernel){}
+            kernel_(kernel) {}
+    Kernel() = default;
     Kernel(const Kernel&) = default;
-    ~Kernel() = default;
 
     double operator()(const std::vector<double>& l, const std::vector<double>& r) const { return kernel_(l, r); }
     std::string name() const { return name_; }
@@ -22,9 +22,6 @@ public:
 private:
     std::string name_;
     std::function<double(const std::vector<double>&, const std::vector<double>&)> kernel_;
-
-private:
-    Kernel() = delete;
 };
 
 namespace kernels {
@@ -68,7 +65,31 @@ const Kernel Hyperbolic(
         "Hyperbolic",
         [](const Vector& a, const Vector& b) { return tanh(1 * dot(a, b) - 1); });
 
+inline Kernel fromName(const std::string& name) {
+    static std::map<std::string, Kernel> data = {
+            {"H1", Homogenous1},
+            {"Homogenous1", Homogenous1},
+            {"H2", Homogenous2},
+            {"Homogenous2", Homogenous2},
+            {"H3", Homogenous3},
+            {"Homogenous3", Homogenous3},
+            {"I1", Inhomogenius1},
+            {"Inhomogenius1", Inhomogenius1},
+            {"I2", Inhomogenius2},
+            {"Inhomogenius2", Inhomogenius2},
+            {"I3", Inhomogenius3},
+            {"Inhomogenius3", Inhomogenius3},
+            {"Radial", Radial},
+            {"RAD", Radial},
+            {"GaussianRadial", GaussianRadial},
+            {"GRAD", GaussianRadial},
+            {"Hyperbolic", Hyperbolic},
+            {"HYP", Hyperbolic}
+    };
 
+    return data[name];
 }
 
-}
+} // namespace kernels
+
+} // namespace lc

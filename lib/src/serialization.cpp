@@ -45,6 +45,7 @@ std::istream& operator>>(std::istream& in, Scaler& r) {
 }
 
 std::ostream& operator<<(std::ostream& out, const Model& m) {
+    out << m.k_.name() << std::endl;
     out << toString(m.w_) << std::endl;
     if (m.scaler_)
         out << *m.scaler_;
@@ -52,9 +53,14 @@ std::ostream& operator<<(std::ostream& out, const Model& m) {
 }
 
 std::istream& operator>>(std::istream& in, Model& m) {
+    std::string k;
+    std::getline(in, k);
+    m.kernel(kernels::fromName(k));
+
     std::string w;
     std::getline(in, w);
     m.w_ = fromString(w);
+
     if (!in.eof()) {
         m.scaler_ = std::make_unique<Scaler>();
         in >> *m.scaler_;

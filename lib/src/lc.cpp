@@ -88,7 +88,8 @@ void Model::train(const Problem& rawProblem) {
             margins_[k] = tmp;
         }
 
-        //norm(margins_);
+        // LAST EXPERIMENT WAS WITH COMMENTED NORM
+        norm(margins_);
         validate(margins_, nobjects_);
     }
 
