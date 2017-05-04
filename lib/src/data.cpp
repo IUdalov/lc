@@ -2,8 +2,8 @@
 
 #include "debug.h"
 
-#include <iostream>
 #include <limits>
+#include <regex>
 
 #include <cassert>
 #include <cmath>
@@ -26,6 +26,51 @@ std::ostream& operator<<(std::ostream& out, const Problem& p) {
     out << "\tfeatures = " << p[0].x().size() << std::endl;
     out << "}" << std::endl;
     return out;
+}
+
+std::istream& operator>>(std::istream& in, Problem& problem) {
+    if (!in)
+        throw std::runtime_error("malformed ifstream");
+
+    std::string line;
+    std::regex tokenRegex("[e0-9\\+\\-\\.:]+");
+
+    while (std::getline(in, line)) {
+        auto token = std::sregex_iterator(line.begin(), line.end(), tokenRegex);
+        auto end = std::sregex_iterator();
+
+        int y = 0;
+        auto yStr = token->str(); token++;
+        if (yStr == "+1")  y = 1;
+        else if (yStr == "-1") y = -1;
+        else throw std::runtime_error("Unexpected token: " + yStr);
+
+        std::vector<double> x;
+        for(;token != end; token++) {
+            auto vStr = token->str();
+            size_t pos = vStr.find(":");
+            if (pos == std::string::npos) throw std::runtime_error("Unexpected value: " + vStr);
+
+            size_t ind = std::stoul(vStr.substr(0, pos));
+            double val = std::stod(vStr.substr(pos + 1));
+
+            if (val != val)
+                throw std::runtime_error("NaN");
+
+            x.resize(ind, 0);
+            x[ind - 1] = val;
+        }
+
+        problem.add(Entry(y, x));
+    }
+
+    size_t max = 0;
+    for(const auto& e : problem.entries())
+        max = std::max(e.size(), max);
+    for(auto& e : problem.entries())
+        e.x().resize(max, 0);
+
+    return in;
 }
 
 double length(const Vector& data) {

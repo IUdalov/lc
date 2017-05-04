@@ -75,5 +75,22 @@ const LossFunction E(
         [](double x) { return exp(-x); },
         [](double x) { return (-1) * exp(-x); });
 
-w
+inline LossFunction fromName(const std::string& name) {
+    static std::map<std::string, LossFunction> data = {
+            {"X1_5", X1_2},
+            {"V", X},
+            {"X", X},
+            {"X3_2", X3_2},
+            {"Q", X2},
+            {"X2", X2},
+            {"X3", X3},
+            {"X4", X4},
+            {"S", S},
+            {"L", L},
+            {"E", E}
+    };
+
+    return data[name];
+}
+
 } } // namespace lc::loss_functions

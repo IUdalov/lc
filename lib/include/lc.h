@@ -3,6 +3,7 @@
 #include <loss_function.h>
 #include <kernel.h>
 #include <scaler.h>
+#include <bayes.h>
 
 #include <string>
 #include <vector>
@@ -19,51 +20,44 @@ public:
     Model();
 
     void train(const Problem&);
-
     double predict(const Vector&) const;
 
-    operator bool() const { return isGood_; };
+    bool valid() const { return scaler_ != nullptr; }
+    operator bool() const { return valid(); };
 
-    // Setters/getters
+    void approximation(Distribution d) { approximation_ = d; }
+    Distribution approximation() const { return approximation_; }
+
     void lossFunction(const LossFunction& lf) { lf_ = lf; };
-
     const LossFunction& lossFunction() { return lf_; };
 
     void kernel(const Kernel& k) { k_ = k; };
-
     const Kernel& kernel() { return k_; };
 
     void c(double c) { c_ = c; };
-
     double c() { return c_; };
 
     void maximumStepsNumber(size_t steps) { maximumSteps_ = steps; };
-
     size_t maximumStepsNumber() { return maximumSteps_; };
 
     void precision(double precision) { precision_ = precision; }
-
     double precision() { return precision_; };
 
     void classifier(const Vector& w) { w_ = w; };
-
     const Vector& classifier() const { return w_; };
 
     void margins(const Vector& m) { margins_ = m; };
-
     const Vector& margins() const { return margins_; };
 
     void log(std::ostream& out);
-
 public:
     void toMargins(const Problem& p);
-
     void toClassifier(const Problem& p);
 
 private:
-    bool isGood_;
-    bool oldBayes_;
     bool invertClassifier_;
+    Distribution approximation_;
+
     Vector w_;
     Vector margins_;
     std::unique_ptr<Scaler> scaler_;
@@ -78,16 +72,14 @@ private:
     // For statistic only
     size_t nobjects_;
     size_t nfeatures_;
-    double rprecision_;
+    double rprecision_; // reached precision
     size_t step_;
 
-    friend std::ostream& operator<<(std::ostream& out, const Model&);
-
-    friend std::istream& operator>>(std::istream& in, Model&);
+    friend std::ostream& operator<<(std::ostream&, const Model&);
+    friend std::istream& operator>>(std::istream&, Model&);
 };
 
-std::ostream& operator<<(std::ostream& out, const Model&);
-
-std::istream& operator<<(std::istream& in, Model&);
+std::istream& operator>>(std::istream&, Model&);
+std::ostream& operator<<(std::ostream&, const Model&);
 
 } // namespace lc

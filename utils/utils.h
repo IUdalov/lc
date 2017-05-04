@@ -8,9 +8,6 @@
 
 namespace lc {
 
-Problem readProblem(std::istream& content);
-Problem readProblem(const std::string& path);
-
 double checkData(const Model& model, const Problem& p);
 
 // Generates normally distributed data set.

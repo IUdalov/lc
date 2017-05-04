@@ -2,10 +2,42 @@
 
 #include "debug.h"
 #include <cmath>
+#include <cassert>
 
 namespace lc {
 
-Vector naiveBayes(const Problem& p) {
+namespace {
+
+double teta(double e, Distribution distribution) {
+    switch(distribution) {
+        case Distribution::Gauss:
+            return e;
+        case Distribution::Poisson:
+            return log(e);
+        case Distribution::Bernoulli:
+        case Distribution::Binomial:
+            return compare(e, 0) ? 0 : log(e / (1 - e));
+        default:
+            assert(false);
+    }
+}
+
+double phi(double dis, Distribution distribution) {
+    switch(distribution) {
+        case Distribution::Gauss:
+            return compare(dis, 0) ? 1 : dis;
+        case Distribution::Poisson:
+        case Distribution::Bernoulli:
+        case Distribution::Binomial:
+            return 1;
+        default:
+            assert(false);
+    }
+}
+
+} // namespace
+
+Vector naiveBayes(const Problem& p, Distribution distribution) {
     size_t features = p[0].size();
     size_t objects = p.entries().size();
 
@@ -51,57 +83,7 @@ Vector naiveBayes(const Problem& p) {
             auto& m = entry.y() == 1 ? mat.first : mat.second;
             auto& d = entry.y() == 1 ? disp.first : disp.second;
 
-            if (compare(d[i], 0)) {
-                d[i] = 1;
-            }
-            w[i] += entry.y() * m[i] / d[i];
-        }
-    }
-
-    return w;
-}
-
-Vector oldNaiveBayes(const Problem& p) {
-    DEBUG << "Build bayes approximation" << std::endl;
-    validate(p);
-
-    size_t n = p[0].x().size();
-
-    size_t p1 = 0;
-    size_t p2 = 0;
-    Vector means1(n, 0.0);
-    Vector means2(n, 0.0);
-    Vector dis1(n, 0.0);
-    Vector dis2(n, 0.0);
-
-    for(size_t j = 0; j < p.entries().size(); j++) {
-        for(size_t i = 0; i < n; i++) {
-            if (p[j].y() == 1) {
-                p1++;
-                means1[i] += p[j][i];
-                dis1[i] += pow(p[j][i], 2);
-            } else {
-                p2++;
-                means2[i] += p[j][i];
-                dis2[i] += pow(p[j][i], 2);
-            }
-        }
-    }
-
-    for(size_t i = n; i < n; i++) {
-        means1[i] = means1[i] / static_cast<double>(p1);
-        dis1[i] = pow(dis1[i] / static_cast<double>(p1), 2) - pow(means1[i], 2);
-
-        means2[i] = means2[i] / static_cast<double>(p2);
-        dis2[i] = pow(dis2[i] / static_cast<double>(p2), 2) - pow(means2[i], 2);
-    }
-
-    Vector w(n, 0);
-    for(size_t j = 0; j < p.entries().size(); j++) {
-        for(size_t i = 0; i < n; i++) {
-            double mean = p[j].y() == 1 ? means1[i] : means2[i];
-            double dis = p[j].y() == 1 ? dis1[i] : dis2[i];
-            w[i] += p[j].y() * (mean / dis);
+            w[i] += entry.y() * teta(m[i], distribution) / phi(d[i], distribution);
         }
     }
 

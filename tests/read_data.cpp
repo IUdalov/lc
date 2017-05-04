@@ -10,7 +10,8 @@ BOOST_AUTO_TEST_CASE(readObjects) {
     ss << "+1 1:1 2:2 3:3" << std::endl;
     ss << "-1 2:-1" << std::endl;
 
-    Problem p = readProblem(ss);
+    Problem p;
+    ss >> p;
     BOOST_CHECK_EQUAL(p.entries().size(), 2);
 
     BOOST_CHECK_EQUAL(p[0], Entry( 1, {1,  2, 3}));
@@ -28,7 +29,8 @@ BOOST_AUTO_TEST_CASE(readWriteData) {
     for(const auto& e : src)
         ss << e;
 
-    Problem dst = readProblem(ss);
+    Problem dst;
+    ss >> dst;
     BOOST_CHECK_EQUAL(src.size(), dst.entries().size());
     for(size_t i = 0; i < src.size(); i++)
         BOOST_CHECK_EQUAL(src[i], dst[i]);

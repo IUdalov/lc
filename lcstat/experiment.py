@@ -36,8 +36,6 @@ class Experiment:
         train_file = touch_file_with_list(self.dataset, tag, objects)
         model_file = tmp_file()
 
-        print("Train " + train_file + " -> " + model_file)
-
         res = run([conf.LC_TRAIN, self.lf, self.kernel, str(self.c), str(self.max_steps), train_file, model_file])
         if res.stderr:
             print("out: %s" % res.stdout)
@@ -47,7 +45,6 @@ class Experiment:
 
     def test_model_lc(self, model, objects, tag):
         test_objects = touch_file_with_list(self.dataset, tag, objects)
-        print("Test " + model + " -> " + test_objects)
         res = run([conf.LC_PREDICT, test_objects, model, "stdout"])
         if res.stderr:
             print("out: %s" % res.stdout)
@@ -98,9 +95,9 @@ class Experiment:
         print("Samples %s" % len(objects))
         self.labels = []
         self.values = []
-        index = 0
+        index = 100 * conf.SPLITS
         for train_index, test_index in KFold(n_splits=conf.SPLITS).split(objects):
-            train, test = objects[train_index], objects[train_index]
+            train, test = objects[train_index], objects[test_index]
             l, v = self.run_on_one_sample(index, train, test)
             self.labels += l
             self.values += v

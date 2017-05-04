@@ -36,8 +36,9 @@ int main(int argc, char* argv[]) {
     std::string trainingFile(argv[5]);
     std::string modelFile(argv[6]);
 
-    auto p = readProblem(trainingFile);
-    std::cout << p;
+    std::ifstream in(trainingFile);
+    Problem p;
+    in >> p;
 
     Model m;
     m.lossFunction(loss_functions::fromName(lf));

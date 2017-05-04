@@ -30,7 +30,14 @@ int main(int argc, char* argv[]) {
     std::string input =  argv[1];
     std::string model = argv[2];
     std::string output = argv[3];
-    auto p = input == "stdin" ? readProblem(std::cin): readProblem(input);
+    Problem p;
+    if (input == "stdin") {
+        std::cin >> p;
+    } else {
+        std::ifstream in(input);
+        in >> p;
+    }
+
 
     Model m;
     std::ifstream in(model);

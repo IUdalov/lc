@@ -21,8 +21,9 @@ def run_on_dataset(ds):
 
         except ValueError:
             print("\tCould not convert data: ", experiment)
-        #except:
-            #print("\tUnexpected error: ", sys.exc_info()[0], experiment)
+        except:
+            junk_experiments.append(experiment)
+            print("\tUnexpected error: ", sys.exc_info()[0], experiment)
 
     dataset_name = basename(ds)
     roc.grouped_by_ms(all_experiments, dataset_name)

@@ -1,9 +1,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <lc.h>
-#include <utils/utils.h>
-
-#include <fstream>
+#include <sstream>
 
 using namespace lc;
 
@@ -11,29 +9,24 @@ using namespace lc;
 namespace  {
 
 struct Fixture {
-    Fixture()
-            : tmpFile("test_serialize")
-            , out(tmpFile)
-            , in(tmpFile) {
+    Fixture() {
         problem.add(Entry( 1, { 3, 4,  5}));
         problem.add(Entry( 1, { 0,  0,  0}));
         problem.add(Entry(-1, {-1, -2, -3}));
     }
 
-    const std::string tmpFile;
     Problem problem;
-    std::ofstream out;
-    std::ifstream in;
+    std::stringstream buffer;
 };
 
 } // namespace
 
 BOOST_FIXTURE_TEST_CASE(serializeResizer, Fixture) {
     Scaler origin(problem);
-    out << origin;
+    buffer << origin;
 
     Scaler copy;
-    in >> copy;
+    buffer >> copy;
 
     for(const auto& e : problem.entries()) {
         Vector v1 = e.x();
@@ -51,10 +44,10 @@ BOOST_FIXTURE_TEST_CASE(serializeResizer, Fixture) {
 BOOST_FIXTURE_TEST_CASE(serializeModel, Fixture) {
     Model origin;
     origin.train(problem);
-    out << origin;
+    buffer << origin;
 
     Model copy;
-    in >> copy;
+    buffer >> copy;
 
     for(const auto& e : problem.entries()) {
         double prob1 = origin.predict(e.x());

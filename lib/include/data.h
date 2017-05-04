@@ -30,7 +30,7 @@ private:
     Entry(const Entry&) = delete;
 };
 
-std::ostream& operator<<(std::ostream& out, const Entry& e);
+std::ostream& operator<<(std::ostream&, const Entry&);
 
 class Problem {
 public:
@@ -57,7 +57,8 @@ private:
     Problem(const Problem&) = delete;
 };
 
-std::ostream& operator<<(std::ostream& out, const Problem& p);
+std::istream& operator>>(std::istream&, Problem&);
+std::ostream& operator<<(std::ostream&, const Problem&);
 
 double dot(const Vector& lf, const Vector& rf);
 double length(const Vector& data);

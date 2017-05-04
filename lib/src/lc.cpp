@@ -35,9 +35,8 @@ std::vector<Vector> createCache(const Problem& p, const Kernel &kernel) {
 } // namespace
 
 Model::Model()
-        : isGood_(true)
-        , oldBayes_(std::getenv("LC_OLD_BAYES") != nullptr)
-        , invertClassifier_(std::getenv("LC_INVERT") != nullptr)
+        : invertClassifier_(std::getenv("LC_INVERT") != nullptr)
+        , approximation_(Distribution::Gauss)
         , lf_(loss_functions::X)
         , k_(kernels::Homogenous1)
         , c_(1)
@@ -55,7 +54,7 @@ void Model::train(const Problem& rawProblem) {
     scaler_ = std::make_unique<Scaler>(problem);
     scaler_->apply(problem);
 
-    w_ = oldBayes_ ? oldNaiveBayes(problem) : naiveBayes(problem);
+    w_ = naiveBayes(problem, approximation_);
     norm(w_);
     validate(w_, nfeatures_);
 
