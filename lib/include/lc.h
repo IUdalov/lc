@@ -72,7 +72,7 @@ private:
     // For statistic only
     size_t nobjects_;
     size_t nfeatures_;
-    double rprecision_; // reached precision
+    double rprecision_;
     size_t step_;
 
     friend std::ostream& operator<<(std::ostream&, const Model&);

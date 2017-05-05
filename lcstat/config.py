@@ -27,9 +27,7 @@ CONSTANTS = [1, 0.1]#, 0.01] #, 0.001]
 
 LC_TRAIN = "bin/lc-train"
 LC_PREDICT = "bin/lc-predict"
-SPLITS = 3
-
-COLORS = ['darkorange', 'cyan', 'indigo', 'seagreen', 'yellow', 'blue', "green", "pink", "grey", "purple", "black"]
+SPLITS = 10
 
 ROC_DIR = "roc3"
 DATA_DIR = "data2"

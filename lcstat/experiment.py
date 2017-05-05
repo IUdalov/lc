@@ -34,7 +34,7 @@ class Experiment:
 
     def train_model_lc(self, objects, tag):
         train_file = touch_file_with_list(self.dataset, tag, objects)
-        model_file = tmp_file()
+        model_file = tmp_file(basename(self.dataset))
 
         res = run([conf.LC_TRAIN, self.lf, self.kernel, str(self.c), str(self.max_steps), train_file, model_file])
         if res.stderr:

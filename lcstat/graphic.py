@@ -3,13 +3,15 @@ import lcstat.config as conf
 from sklearn.metrics import roc_curve, auc
 import matplotlib.pyplot as plt
 
+COLORS = ['darkorange', 'cyan', 'indigo', 'seagreen', 'yellow', 'blue', "green", "pink", "grey", "purple", "black"]
+
 def roc(experiments, name, output):
     plt.figure()
     lw = 2
     for index, e in enumerate(experiments):
         fpr, tpr, _ = roc_curve(e.labels, e.values)
         roc_auc = auc(fpr, tpr)
-        plt.plot(fpr, tpr, color=conf.COLORS[index], lw=lw, label= e.str() + ' (AUC = %0.5f)' % roc_auc)
+        plt.plot(fpr, tpr, color=COLORS[index], lw=lw, label= e.str() + ' (AUC = %0.5f)' % roc_auc)
 
     plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
     plt.xlim([0.0, 1.0])
@@ -84,7 +86,7 @@ def grouped_by_c(all, dataset_name):
 
 
 def grouped_by_lf(all, dataset_name):
-    print("Grouping by Kernel")
+    print("Grouping by Loss Function")
     tag = "by_lf"
     index = dict()
     init = None

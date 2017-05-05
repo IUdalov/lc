@@ -12,9 +12,9 @@ def run(cmd):
     print("cmd: " + " ".join(cmd))
     return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=os.environ)
 
-def tmp_file():
+def tmp_file(seed="roc3_dummy"):
     tmp_file.counter += 1
-    return conf.TMP_DIR + "/roc3" +  str(tmp_file.counter)
+    return conf.TMP_DIR + "/" + seed +  str(tmp_file.counter)
 tmp_file.counter = 0
 
 def basename(name):

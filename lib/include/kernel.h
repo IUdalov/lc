@@ -50,17 +50,14 @@ const Kernel Inhomogenius3(
         "Inhomogenius3",
         [](const Vector& a, const Vector& b) { return pow(dot(a, b) + 1, 3); });
 
-// Not tested
 const Kernel Radial(
         "Radial",
         [](const Vector& a, const Vector& b) { return exp((-1) * pow(dot(a, b), 2)); });
 
-// Not tested
 const Kernel GaussianRadial(
         "GaussianRadial",
         [](const Vector& a, const Vector& b) { return exp((-0.5) * pow(dot(a, b), 2)); });
 
-// Not tested
 const Kernel Hyperbolic(
         "Hyperbolic",
         [](const Vector& a, const Vector& b) { return tanh(1 * dot(a, b) - 1); });
