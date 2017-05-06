@@ -12,10 +12,9 @@ def run_on_dataset(ds):
     successful = []
     failed = []
     all = experiments(ds)
-    print("WILL BE %d EXPERIMENTS" % len(all))
 
     for index, experiment in enumerate(all):
-        print("EXPERIMENT %d/%d" % (index, len(all)))
+        print("EXPERIMENT %d/%d" % (index + 1, len(all)))
         try:
             experiment.perform()
             if experiment.verify():
