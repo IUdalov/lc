@@ -51,7 +51,7 @@ void Model::train(const Problem& rawProblem) {
     nobjects_ = problem.entries().size();
     nfeatures_ = problem[0].x().size();
 
-    scaler_ = std::make_unique<Scaler>(problem);
+    scaler_.reset(new Scaler(problem));
     scaler_->apply(problem);
 
     w_ = naiveBayes(problem, approximation_);

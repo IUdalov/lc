@@ -62,7 +62,7 @@ std::istream& operator>>(std::istream& in, Model& m) {
     m.w_ = fromString(w);
 
     if (!in.eof()) {
-        m.scaler_ = std::make_unique<Scaler>();
+        m.scaler_.reset(new Scaler());
         in >> *m.scaler_;
     }
     return in;
