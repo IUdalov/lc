@@ -2,6 +2,7 @@ import lcstat.config as conf
 
 from sklearn.metrics import roc_curve, auc
 import matplotlib.pyplot as plt
+import os
 
 COLORS = ['darkorange', 'cyan', 'indigo', 'seagreen', 'yellow', 'blue', "green", "pink", "grey", "purple", "black"]
 
@@ -13,9 +14,14 @@ def roc(experiments, name, output):
         roc_auc = auc(fpr, tpr)
         plt.plot(fpr, tpr, color=COLORS[index], lw=lw, label= e.str() + ' (AUC = %0.5f)' % roc_auc)
 
-    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
+    if os.getenv('ZOOM'):
+        plt.xlim([0.0, 0.5])
+        plt.ylim([0.5, 1.05])
+    else:
+        plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.title('ROC ' + name)

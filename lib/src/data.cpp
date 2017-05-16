@@ -28,6 +28,29 @@ std::ostream& operator<<(std::ostream& out, const Problem& p) {
     return out;
 }
 
+namespace {
+
+std::pair<size_t,double> parsePair(const std::string& src) {
+    size_t pos = src.find(":");
+    if (pos == std::string::npos)
+        throw std::runtime_error("Unexpected value: " + src);
+
+    return std::make_pair<size_t, double >(
+            std::stoul(src.substr(0, pos)),
+            std::stod(src.substr(pos + 1)));
+};
+
+void addNew(Vector& x, std::string& buf) {
+    auto p = parsePair(buf);
+    if (p.first > x.size())
+        x.resize(p.first, 0);
+
+    x[p.first - 1] = p.second;
+    buf.clear();
+}
+
+} // namespace
+
 std::istream& operator>>(std::istream& in, Problem& problem) {
     if (!in)
         throw std::runtime_error("malformed ifstream");
@@ -35,31 +58,24 @@ std::istream& operator>>(std::istream& in, Problem& problem) {
     std::string line;
     std::regex tokenRegex("[e0-9\\+\\-\\.:]+");
 
+    Vector x;
+    std::string buf;
+
     while (std::getline(in, line)) {
-        auto token = std::sregex_iterator(line.begin(), line.end(), tokenRegex);
-        auto end = std::sregex_iterator();
+        x.assign(x.size(), 0.0);
+        for(size_t i = 3; i < line.size(); i++)
+            if (line[i] == ' ')
+                addNew(x, buf);
+            else
+                buf.push_back(line[i]);
+
+        addNew(x, buf);
 
         int y = 0;
-        auto yStr = token->str(); token++;
-        if (yStr == "+1")  y = 1;
+        auto yStr = line.substr(0,2);
+        if (yStr == "+1") y = 1;
         else if (yStr == "-1") y = -1;
         else throw std::runtime_error("Unexpected token: " + yStr);
-
-        std::vector<double> x;
-        for(;token != end; token++) {
-            auto vStr = token->str();
-            size_t pos = vStr.find(":");
-            if (pos == std::string::npos) throw std::runtime_error("Unexpected value: " + vStr);
-
-            size_t ind = std::stoul(vStr.substr(0, pos));
-            double val = std::stod(vStr.substr(pos + 1));
-
-            if (val != val)
-                throw std::runtime_error("NaN");
-
-            x.resize(ind, 0);
-            x[ind - 1] = val;
-        }
 
         problem.add(Entry(y, x));
     }

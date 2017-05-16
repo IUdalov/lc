@@ -25,8 +25,12 @@ std::vector<Vector> createCache(const Problem& p, const Kernel &kernel) {
         c.shrink_to_fit();
 
     for (size_t i = 0; i < l; i++)
-        for (size_t j = 0; j < l; j++)
-            cache[i][j] = p[i].y() * p[j].y() * kernel(p[i].x(), p[j].x());
+        for (size_t j = 0; j < l; j++) {
+            double tmp = p[i].y() * p[j].y() * kernel(p[i].x(), p[j].x());
+            cache[i][j] = tmp;
+            cache[j][i] = tmp;
+        }
+
 
     DEBUG << "Done" << std::endl;
     return cache;
@@ -35,8 +39,7 @@ std::vector<Vector> createCache(const Problem& p, const Kernel &kernel) {
 } // namespace
 
 Model::Model()
-        : invertClassifier_(std::getenv("LC_INVERT") != nullptr)
-        , approximation_(Distribution::Gauss)
+        : approximation_(Distribution::Gauss)
         , lf_(loss_functions::X)
         , k_(kernels::Homogenous1)
         , c_(1)
@@ -81,14 +84,14 @@ void Model::train(const Problem& rawProblem) {
         for(std::size_t k = 0; k < margins_.size(); k++) {
             double tmp = margins_[k];
             for(std::size_t i = 0; i < margins_.size(); i++) {
-                double acc =  (-c_) * lf_.diff(margins_[i]) * cache[i][k];
+                double acc =  (-c_) * lf_.d(margins_[i]) * cache[i][k];
                 tmp += acc;
             }
             margins_[k] = tmp;
         }
 
-        // LAST EXPERIMENT WAS WITH COMMENTED NORM
-        norm(margins_);
+        if (step_ % 10 == 0)
+            norm(margins_);
         validate(margins_, nobjects_);
     }
 
@@ -107,10 +110,9 @@ double Model::predict(const Vector& value) const {
     else
         DEBUG << "Empty scaler!" << std::endl;
 
-    if (invertClassifier_) {
+    if (getenv("LC_INVERT"))
         for(auto& e : copy)
             e = -e;
-    }
 
     return k_(w_, copy);
 }
@@ -138,7 +140,7 @@ void Model::toClassifier(const Problem& p) {
 
     for(size_t i = 0; i < p.entries().size(); i++) {
         for(size_t k = 0; k < n; k++) {
-            double diffI = lf_.diff(-margins_[i]);
+            double diffI = lf_.d(-margins_[i]);
             w_[k] += (-c_) * diffI * p[i][k] * p[i].y();
         }
     }
@@ -146,7 +148,7 @@ void Model::toClassifier(const Problem& p) {
     printVector("w_ from margins_", w_);
 }
 
-void Model::log(std::ostream& out) {
+void Model::log(std::ostream& out) const {
     out << "Model {" << std::endl;
     out << "\tobjects = " << nobjects_ << std::endl;
     out << "\tfeatures = " << nfeatures_ << std::endl;

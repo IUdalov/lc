@@ -36,7 +36,13 @@ class Experiment:
         train_file = touch_file_with_list(self.dataset, tag, objects)
         model_file = tmp_file(basename(self.dataset))
 
-        res = run([conf.LC_TRAIN, self.lf, self.kernel, str(self.c), str(self.max_steps), train_file, model_file])
+        params = {
+            "LC_LF": self.lf,
+            "LC_KERNEL": self.kernel,
+            "LC_C": str(self.c),
+            "LC_STEPS": str(self.max_steps)
+        }
+        res = run([conf.LC_TRAIN, train_file, model_file], params)
         if res.stderr:
             print("out: %s" % res.stdout)
             print("err: %s" % res.stderr)
@@ -113,12 +119,11 @@ class Experiment:
 
     def str(self):
         if self.method == "lc":
-            tag = "lf: {0}, c: {1}, step: {2} kernel: {3}".format(self.pretty_lf, self.c, self.max_steps, self.kernel)
+            return "lc f: {0} c: {1} s: {2} k: {3}".format(self.pretty_lf, self.c, self.max_steps, self.kernel)
         elif self.method == "svm":
-            tag = "c: {0} kernel: {1}".format(self.c, self.kernel)
+            return "SVM c: {0} k: {1}".format(self.c, self.kernel)
         elif self.method == "bayes":
-            tag = ""
+            return "initial"
         else:
             print("\n\n\n\tError in type")
             raise Exception("Malformed experiment")
-        return self.method + " " + tag

@@ -20,7 +20,7 @@ public:
 
     double operator()(double v) const { return function_(v); }
 
-    double diff(double v) const { return diff_(v); }
+    double d(double v) const { return diff_(v); }
 
 private:
     std::string name_;

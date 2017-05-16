@@ -4,7 +4,9 @@ import lcstat.config as conf
 from lcstat.helpers import *
 import lcstat.graphic as roc
 from lcstat.experiment import Experiment
+
 import sys
+import os
 
 def run_on_dataset(ds):
     mkdir(conf.ROC_DIR)
@@ -24,15 +26,15 @@ def run_on_dataset(ds):
 
         except ValueError:
             print("\tCould not convert data: ", experiment)
-        except:
-            failed.append(experiment)
-            print("\tUnexpected error: ", sys.exc_info()[0], experiment)
+        #except:
+            #failed.append(experiment)
+            #print("\tUnexpected error: ", sys.exc_info()[0], experiment)
 
     dataset_name = basename(ds)
     roc.grouped_by_ms(successful, dataset_name)
-    roc.grouped_by_c(successful, dataset_name)
+    #roc.grouped_by_c(successful, dataset_name)
     roc.grouped_by_lf(successful, dataset_name)
-    roc.grouped_by_kernel(successful, dataset_name)
+    #roc.grouped_by_kernel(successful, dataset_name)
 
     for e in failed:
         print("BROKEN {0}".format(e.str()))
@@ -52,14 +54,16 @@ def experiments(ds):
     res = []
     res.append(Experiment(ds, "X", "no pretty", "H1", 1, 0, method="bayes"))
 
-    for c in conf.CONSTANTS:
-        res.append(Experiment(ds, "X", "no pretty", "H1", c, 0, method="svm"))
+    if not os.getenv('SKIP_SVM'):
+        for c in conf.CONSTANTS:
+            res.append(Experiment(ds, "X", "no pretty", "H1", c, 0, method="svm"))
 
     for c in conf.CONSTANTS:
         for ms in conf.STEPS:
             for kernel in conf.KERNELS:
                 for lf, pretty_lf in conf.LFS.items():
                     res.append(Experiment(ds, lf, pretty_lf, kernel, c, ms))
+
     return res
 
 def print_usage():

@@ -8,9 +8,11 @@
 
 namespace lc {
 
+typedef std::function<double(const std::vector<double>&, const std::vector<double>&)> KernelFunction;
+
 class Kernel {
 public:
-    Kernel(const std::string& name, std::function<double(const std::vector<double>&, const std::vector<double>&)> kernel):
+    Kernel(const std::string& name, const KernelFunction& kernel):
             name_(name),
             kernel_(kernel) {}
     Kernel() = default;
@@ -21,7 +23,7 @@ public:
 
 private:
     std::string name_;
-    std::function<double(const std::vector<double>&, const std::vector<double>&)> kernel_;
+    KernelFunction kernel_;
 };
 
 namespace kernels {

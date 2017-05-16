@@ -23,8 +23,8 @@ public:
     bool operator!=(const Entry& other) const { return !operator==(other); }
 
 private:
-    int y_;
-    Vector x_;
+    int y_;    // class
+    Vector x_; // features
 
 private:
     Entry(const Entry&) = delete;

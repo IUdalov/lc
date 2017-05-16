@@ -8,9 +8,15 @@ def mkdir(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-def run(cmd):
-    print("cmd: " + " ".join(cmd))
-    return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=os.environ)
+def run(cmd, environment = {}):
+    pretty = []
+    for name, val in environment.items():
+        pretty.append("{k}={v}".format(k=name, v=val))
+    pretty += cmd
+    print("cmd: " + " ".join(pretty))
+
+    tmp = {**environment, **os.environ}
+    return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=tmp)
 
 def tmp_file(seed="roc3_dummy"):
     tmp_file.counter += 1

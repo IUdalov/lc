@@ -22,26 +22,23 @@ public:
     void train(const Problem&);
     double predict(const Vector&) const;
 
-    bool valid() const { return scaler_ != nullptr; }
-    operator bool() const { return valid(); };
-
     void approximation(Distribution d) { approximation_ = d; }
     Distribution approximation() const { return approximation_; }
 
     void lossFunction(const LossFunction& lf) { lf_ = lf; };
-    const LossFunction& lossFunction() { return lf_; };
+    const LossFunction& lossFunction() const { return lf_; };
 
     void kernel(const Kernel& k) { k_ = k; };
-    const Kernel& kernel() { return k_; };
+    const Kernel& kernel() const { return k_; };
 
     void c(double c) { c_ = c; };
-    double c() { return c_; };
+    double c() const { return c_; };
 
     void maximumStepsNumber(size_t steps) { maximumSteps_ = steps; };
-    size_t maximumStepsNumber() { return maximumSteps_; };
+    size_t maximumStepsNumber() const { return maximumSteps_; };
 
     void precision(double precision) { precision_ = precision; }
-    double precision() { return precision_; };
+    double precision() const { return precision_; };
 
     void classifier(const Vector& w) { w_ = w; };
     const Vector& classifier() const { return w_; };
@@ -49,13 +46,12 @@ public:
     void margins(const Vector& m) { margins_ = m; };
     const Vector& margins() const { return margins_; };
 
-    void log(std::ostream& out);
+    void log(std::ostream& out) const;
 public:
     void toMargins(const Problem& p);
     void toClassifier(const Problem& p);
 
 private:
-    bool invertClassifier_;
     Distribution approximation_;
 
     Vector w_;
