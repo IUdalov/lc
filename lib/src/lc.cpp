@@ -25,7 +25,7 @@ std::vector<Vector> createCache(const Problem& p, const Kernel &kernel) {
         c.shrink_to_fit();
 
     for (size_t i = 0; i < l; i++)
-        for (size_t j = 0; j < l; j++) {
+        for (size_t j = i; j < l; j++) {
             double tmp = p[i].y() * p[j].y() * kernel(p[i].x(), p[j].x());
             cache[i][j] = tmp;
             cache[j][i] = tmp;
@@ -90,8 +90,7 @@ void Model::train(const Problem& rawProblem) {
             margins_[k] = tmp;
         }
 
-        if (step_ % 10 == 0)
-            norm(margins_);
+        norm(margins_);
         validate(margins_, nobjects_);
     }
 
