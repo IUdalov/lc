@@ -7,16 +7,16 @@
 namespace lc {
 
 enum class Distribution {
+    Random,
     Gauss,
     Poisson,
     Bernoulli,
     Binomial
 };
 
-Vector naiveBayes(const Problem& p, Distribution distribution = Distribution::Gauss);
-
 inline Distribution distributionFromName(const std::string& name) {
     static std::map<std::string, Distribution> data = {
+            {"Random", Distribution::Random},
             {"Gauss", Distribution::Gauss},
             {"Normal", Distribution::Gauss},
             {"Poisson", Distribution::Poisson},
@@ -27,4 +27,8 @@ inline Distribution distributionFromName(const std::string& name) {
     return data[name];
 }
 
-} // namespace lc
+namespace internal {
+
+Vector naiveBayes(const Problem& p, Distribution distribution = Distribution::Gauss);
+
+} } // namespace lc::internal

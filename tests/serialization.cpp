@@ -4,7 +4,7 @@
 #include <sstream>
 
 using namespace lc;
-
+using namespace lc::internal;
 
 namespace  {
 

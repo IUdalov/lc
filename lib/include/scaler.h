@@ -3,6 +3,7 @@
 #include "data.h"
 
 namespace lc {
+namespace internal {
 
 class Scaler {
 public:
@@ -23,4 +24,4 @@ private:
 std::ostream& operator<<(std::ostream& out, const Scaler& p);
 std::istream& operator>>(std::istream& in, Scaler& p);
 
-} // namespace lc
+} } // namespace lc::internal

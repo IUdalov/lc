@@ -3,6 +3,7 @@
 #include <cmath>
 
 namespace lc {
+namespace internal {
 
 #ifndef NDEBUG
 
@@ -44,4 +45,4 @@ void validate(const Problem&) {}
 
 #endif //NDEBUG
 
-} // namespace lc
+} } // namespace lc::internal

@@ -25,6 +25,9 @@ public:
     void approximation(Distribution d) { approximation_ = d; }
     Distribution approximation() const { return approximation_; }
 
+    void useNFeatures(size_t i) { useNFeatures_ = i; }
+    size_t useNFeatures() const { return useNFeatures_; }
+
     void lossFunction(const LossFunction& lf) { lf_ = lf; };
     const LossFunction& lossFunction() const { return lf_; };
 
@@ -53,10 +56,11 @@ public:
 
 private:
     Distribution approximation_;
+    size_t useNFeatures_;
 
     Vector w_;
     Vector margins_;
-    std::unique_ptr<Scaler> scaler_;
+    std::unique_ptr<internal::Scaler> scaler_;
 
     LossFunction lf_;
     Kernel k_;

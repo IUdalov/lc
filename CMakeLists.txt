@@ -36,7 +36,7 @@ target_link_libraries(lc-generate lc)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(GENERAL "-std=c++11")
-    set(BUILD_FLAVOR "-O2 -g -DNDEBUG")
+    set(BUILD_FLAVOR "-O3 -g -DNDEBUG")
     set(ENABLE_WARNINGS "-Werror -Wall -Wextra -pedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-promo -Wstrict-overflow=5 -Wundef -Wno-unused -Wno-variadic-macros -Wno-parentheses -fdiagnostics-show-option")
     set_target_properties(lc PROPERTIES COMPILE_FLAGS "${ENABLE_WARNINGS} ${GENERAL} ${BUILD_FLAVOR}")
     set_target_properties(tests PROPERTIES COMPILE_FLAGS "${ENABLE_WARNINGS} ${GENERAL} ${BUILD_FLAVOR}")

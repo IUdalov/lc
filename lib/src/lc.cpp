@@ -2,36 +2,70 @@
 
 #include "bayes.h"
 #include "debug.h"
+#include "select_features.h"
 
-#include <cstdlib>
-#include <cmath>
+#include <algorithm>
 #include <exception>
+#include <thread>
+
+#include <cmath>
+#include <cstdlib>
+
+using namespace lc::internal;
 
 namespace lc {
 
 namespace {
 
 const size_t DEFAULT_MAXIMUM_STEPS = 100;
-const double DEFAULT_PRECISION = 0;//std::numeric_limits<double>::epsilon();
+const double DEFAULT_PRECISION = std::numeric_limits<double>::epsilon();
+const size_t MAX_ONE_THREAD_PROBLEM = 100000;
 
-std::vector<Vector> createCache(const Problem& p, const Kernel &kernel) {
-    std::vector<Vector> cache;
-    DEBUG << "Caching with kernel " << kernel.name() << std::endl;
-    cache.clear();
+void createOneThreadCache(const Problem& p, const Kernel& kernel, std::vector<Vector>& cache) {
+    DEBUG << "Single thread caching" << std::endl;
     size_t l = p.entries().size();
-    cache.resize(l, std::vector<double>(l, 0));
-
-    for (auto &c : cache)
-        c.shrink_to_fit();
-
     for (size_t i = 0; i < l; i++)
         for (size_t j = i; j < l; j++) {
             double tmp = p[i].y() * p[j].y() * kernel(p[i].x(), p[j].x());
             cache[i][j] = tmp;
             cache[j][i] = tmp;
         }
+}
 
+void createManyThreadsCache(const Problem& p, const Kernel& kernel, std::vector<Vector>& cache) {
+    DEBUG << "Multithread chaching" << std::endl;
+    size_t l = p.entries().size();
+    size_t nthreads = std::max(4u, std::thread::hardware_concurrency());
 
+    std::vector<std::thread> threads;
+    threads.reserve(nthreads);
+
+    size_t splitSize = l / nthreads;
+    for(size_t threadId = 0; threadId < nthreads; threadId++) {
+        size_t left = splitSize * threadId;
+        size_t right = threadId == nthreads - 1 ? l : splitSize * (threadId + 1);
+        threads.emplace_back([&](size_t lhs, size_t rhs){
+            for (size_t i = lhs; i < rhs; i++)
+                for (size_t j = i; j < l; j++) {
+                    double tmp = p[i].y() * p[j].y() * kernel(p[i].x(), p[j].x());
+                    cache[i][j] = tmp;
+                    cache[j][i] = tmp;
+                }
+        }, left, right);
+    }
+
+    for(auto& thread : threads) thread.join();
+}
+
+std::vector<Vector> createCache(const Problem& p, const Kernel& kernel) {
+    std::vector<Vector> cache(p.entries().size(), std::vector<double>(p.entries().size()));
+
+    DEBUG << "Caching with kernel " << kernel.name() << std::endl;
+    if (p.entries().size() * p[0].size() > MAX_ONE_THREAD_PROBLEM) {
+        createManyThreadsCache(p, kernel, cache);
+    } else {
+        createOneThreadCache(p, kernel, cache);
+    }
     DEBUG << "Done" << std::endl;
     return cache;
 }
@@ -40,6 +74,7 @@ std::vector<Vector> createCache(const Problem& p, const Kernel &kernel) {
 
 Model::Model()
         : approximation_(Distribution::Gauss)
+        , useNFeatures_(0)
         , lf_(loss_functions::X)
         , k_(kernels::Homogenous1)
         , c_(1)
@@ -60,6 +95,10 @@ void Model::train(const Problem& rawProblem) {
     w_ = naiveBayes(problem, approximation_);
     norm(w_);
     validate(w_, nfeatures_);
+
+    if (useNFeatures_ != 0) {
+        selectFeatures(w_, useNFeatures_);
+    }
 
     if (maximumSteps_ == 0) {
         DEBUG << "Stopped after naive bayes" << std::endl;

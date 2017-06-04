@@ -30,39 +30,39 @@ namespace kernels {
 
 const Kernel Homogenous1(
         "Homogenous1",
-        [](const Vector& a, const Vector& b) { return dot(a, b); });
+        [](const Vector& a, const Vector& b) { return internal::dot(a, b); });
 
 const Kernel Homogenous2(
         "Homogenous2",
-        [](const Vector& a, const Vector& b) { return pow(dot(a, b), 2); });
+        [](const Vector& a, const Vector& b) { return pow(internal::dot(a, b), 2); });
 
 const Kernel Homogenous3(
         "Homogenous3",
-        [](const Vector& a, const Vector& b) { return pow(dot(a, b), 3); });
+        [](const Vector& a, const Vector& b) { return pow(internal::dot(a, b), 3); });
 
 const Kernel Inhomogenius1(
         "Inhomogenius1",
-        [](const Vector& a, const Vector& b) { return dot(a, b) + 1; });
+        [](const Vector& a, const Vector& b) { return internal::dot(a, b) + 1; });
 
 const Kernel Inhomogenius2(
         "Inhomogenius2",
-        [](const Vector& a, const Vector& b) { return pow(dot(a, b) + 1, 2); });
+        [](const Vector& a, const Vector& b) { return pow(internal::dot(a, b) + 1, 2); });
 
 const Kernel Inhomogenius3(
         "Inhomogenius3",
-        [](const Vector& a, const Vector& b) { return pow(dot(a, b) + 1, 3); });
+        [](const Vector& a, const Vector& b) { return pow(internal::dot(a, b) + 1, 3); });
 
 const Kernel Radial(
         "Radial",
-        [](const Vector& a, const Vector& b) { return exp((-1) * pow(dot(a, b), 2)); });
+        [](const Vector& a, const Vector& b) { return exp((-1) * pow(internal::dot(a, b), 2)); });
 
 const Kernel GaussianRadial(
         "GaussianRadial",
-        [](const Vector& a, const Vector& b) { return exp((-0.5) * pow(dot(a, b), 2)); });
+        [](const Vector& a, const Vector& b) { return exp((-0.5) * pow(internal::dot(a, b), 2)); });
 
 const Kernel Hyperbolic(
         "Hyperbolic",
-        [](const Vector& a, const Vector& b) { return tanh(1 * dot(a, b) - 1); });
+        [](const Vector& a, const Vector& b) { return tanh(1 * internal::dot(a, b) - 1); });
 
 inline Kernel fromName(const std::string& name) {
     static std::map<std::string, Kernel> data = {
@@ -90,5 +90,4 @@ inline Kernel fromName(const std::string& name) {
 }
 
 } // namespace kernels
-
 } // namespace lc

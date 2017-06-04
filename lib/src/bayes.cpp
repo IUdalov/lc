@@ -1,10 +1,13 @@
 #include "bayes.h"
 
 #include "debug.h"
+#include <random>
 #include <cmath>
 #include <cassert>
 
 namespace lc {
+
+using namespace internal;
 
 namespace {
 
@@ -18,7 +21,7 @@ double teta(double e, Distribution distribution) {
         case Distribution::Binomial:
             return compare(e, 0) ? 0 : log(e / (1 - e));
         default:
-            assert(false);
+            std::abort();
     }
 }
 
@@ -31,13 +34,11 @@ double phi(double dis, Distribution distribution) {
         case Distribution::Binomial:
             return 1;
         default:
-            assert(false);
+            std::abort();
     }
 }
 
-} // namespace
-
-Vector naiveBayes(const Problem& p, Distribution distribution) {
+Vector realNaiveBayes(const Problem& p, Distribution distribution) {
     size_t features = p[0].size();
     size_t objects = p.entries().size();
 
@@ -90,4 +91,27 @@ Vector naiveBayes(const Problem& p, Distribution distribution) {
     return w;
 }
 
-} // namespace lc
+Vector randomVector(const Problem& p) {
+    Vector v(p[0].size(), 0);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(-1, 1);
+    for(auto& elem : v) {
+        elem = dis(gen);
+    }
+    return v;
+}
+
+} // namespace
+
+namespace internal {
+
+Vector naiveBayes(const Problem& p, Distribution distribution) {
+    if (distribution == Distribution::Random) {
+        return randomVector(p);
+    } else {
+        return realNaiveBayes(p, distribution);
+    }
+}
+
+} } // namespace lc::interal

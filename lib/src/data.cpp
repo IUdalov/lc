@@ -89,6 +89,8 @@ std::istream& operator>>(std::istream& in, Problem& problem) {
     return in;
 }
 
+namespace internal {
+
 double length(const Vector& data) {
     double acc = 0;
     for(size_t i = 0; i < data.size(); i++) {
@@ -99,7 +101,7 @@ double length(const Vector& data) {
 
 double distance(const Vector& v1, const Vector& v2) {
     if (v1.size() != v1.size()) {
-        throw std::runtime_error(std::string("Error in") + __FUNCTION__);
+        throw std::runtime_error(std::string("Error in ") + __FUNCTION__);
     }
     double res = 0;
     for(size_t i = 0; i < v1.size(); i++) {
@@ -132,4 +134,4 @@ void norm(Vector& a) {
     }
 }
 
-}
+} } // namspace lc::internal

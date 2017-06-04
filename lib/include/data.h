@@ -60,6 +60,8 @@ private:
 std::istream& operator>>(std::istream&, Problem&);
 std::ostream& operator<<(std::ostream&, const Problem&);
 
+namespace internal {
+
 double dot(const Vector& lf, const Vector& rf);
 double length(const Vector& data);
 double distance(const Vector& v1, const Vector& v2);
@@ -67,4 +69,4 @@ bool compare(double a, double b);
 bool compareWith(double a, double b, double pres);
 void norm(Vector& a);
 
-} // namespace lc
+}} // namespace lc::internal

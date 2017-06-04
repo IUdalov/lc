@@ -4,6 +4,8 @@
 
 namespace lc {
 
+using namespace internal;
+
 std::string toString(const Vector& v) {
     std::stringstream ss;
     for(size_t i = 0; i < v.size(); i++) {
@@ -25,13 +27,13 @@ Vector fromString(const std::string& str) {
     return res;
 }
 
-std::ostream& operator<<(std::ostream& out, const Scaler& p) {
+std::ostream& internal::operator<<(std::ostream& out, const Scaler& p) {
     out << toString(p.factor_) << std::endl;
     out << toString(p.offset_) << std::endl;
     return out;
 }
 
-std::istream& operator>>(std::istream& in, Scaler& r) {
+std::istream& internal::operator>>(std::istream& in, Scaler& r) {
     std::string factor;
     std::string offset;
     std::getline(in, factor);
@@ -40,7 +42,7 @@ std::istream& operator>>(std::istream& in, Scaler& r) {
     r.factor_ = fromString(factor);
     r.offset_ = fromString(offset);
 
-    if (!r) throw std::runtime_error("Fail to load model: invalid resizer");
+    if (!r) throw std::runtime_error("Fail to load model: invalid resize");
     return in;
 }
 

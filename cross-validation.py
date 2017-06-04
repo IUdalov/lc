@@ -32,9 +32,9 @@ def run_on_dataset(ds):
 
     dataset_name = basename(ds)
     roc.grouped_by_ms(successful, dataset_name)
-    #roc.grouped_by_c(successful, dataset_name)
+    roc.grouped_by_c(successful, dataset_name)
     roc.grouped_by_lf(successful, dataset_name)
-    #roc.grouped_by_kernel(successful, dataset_name)
+    roc.grouped_by_kernel(successful, dataset_name)
 
     for e in failed:
         print("BROKEN {0}".format(e.str()))

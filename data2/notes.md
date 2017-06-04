@@ -60,6 +60,9 @@ http://archive.ics.uci.edu/ml/datasets/Mushroom
 sonar: по сигналам отличать маталические объекты от каменных
 http://archive.ics.uci.edu/ml/datasets/Connectionist+Bench+(Sonar,+Mines+vs.+Rocks)
 
+sms_spam
+http://archive.ics.uci.edu/ml/datasets/SMS+Spam+Collection
+
 spambase1000: web спам
 http://archive.ics.uci.edu/ml/datasets/Spambase
 
@@ -71,3 +74,19 @@ http://archive.ics.uci.edu/ml/datasets/Wine
 
 cancer-wisconsin/wdbc/wpbc: 3 датасета про рак груди
 http://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29
+
+http://archive.ics.uci.edu/ml/datasets/Human+Activity+Recognition+Using+Smartphones
+
+https://www.kaggle.com/abcsds/pokemon (хуже +)
+
+http://archive.ics.uci.edu/ml/datasets/Detect+Malacious+Executable%28AntiVirus%29
+http://archive.ics.uci.edu/ml/datasets/NIPS+Conference+Papers+1987-2015 (сложно)
+http://archive.ics.uci.edu/ml/datasets/sEMG+for+Basic+Hand+movements
+http://archive.ics.uci.edu/ml/datasets/MicroMass фигня
+http://archive.ics.uci.edu/ml/datasets/CNAE-9 (todo)
+http://archive.ics.uci.edu/ml/datasets/DBWorld+e-mails (сложно)
+http://archive.ics.uci.edu/ml/datasets/p53+Mutants
+http://archive.ics.uci.edu/ml/datasets/Dexter (20 000 features)
+http://archive.ics.uci.edu/ml/datasets/KDD+Cup+1998+Data
+http://archive.ics.uci.edu/ml/datasets/Multiple+Features
+http://archive.ics.uci.edu/ml/datasets/ISOLET

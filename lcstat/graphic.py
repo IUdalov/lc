@@ -12,7 +12,7 @@ def roc(experiments, name, output):
     for index, e in enumerate(experiments):
         fpr, tpr, _ = roc_curve(e.labels, e.values)
         roc_auc = auc(fpr, tpr)
-        plt.plot(fpr, tpr, color=COLORS[index], lw=lw, label= e.str() + ' (AUC = %0.5f)' % roc_auc)
+        plt.plot(fpr, tpr, color=COLORS[index % len(COLORS)], lw=lw, label= e.str() + ' (AUC = %0.5f)' % roc_auc)
 
     if os.getenv('ZOOM'):
         plt.xlim([0.0, 0.5])

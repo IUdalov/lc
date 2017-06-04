@@ -4,6 +4,7 @@
 #include <utils/utils.h>
 
 using namespace lc;
+using namespace lc::internal;
 
 BOOST_AUTO_TEST_CASE(scaleSample) {
     Problem p1;

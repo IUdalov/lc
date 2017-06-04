@@ -11,6 +11,7 @@
 #endif
 
 namespace lc {
+namespace internal {
 
 void printVector(const std::string& name, const Vector& v);
 
@@ -18,4 +19,4 @@ void validate(double v);
 void validate(const Problem& p);
 void validate(const Vector& v, size_t space);
 
-} // namespace lc
+}} // namespace lc::internal

@@ -3,6 +3,8 @@ import lcstat.config as conf
 import os
 import subprocess
 
+def file_content(path):
+    with open(path) as f: return f.read()
 
 def mkdir(directory):
     if not os.path.exists(directory):

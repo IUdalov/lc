@@ -24,6 +24,7 @@ void printUsage(const std::string progName) {
     std::cout << "\tLC_C - algorithm parameter (> 0)" << std::endl;
     std::cout << "\tLC_STEPS - number of iterations" << std::endl;
     std::cout << "\tLC_INIT - type of initial approximation" << std::endl;
+    std::cout << "\tLC_USE_N_FEATURES - number of features to use in initial approximation" << std::endl;
     std::cout << std::endl;
 
     std::cout << "Functions:" << std::endl;
@@ -46,6 +47,7 @@ void printUsage(const std::string progName) {
     std::cout << "\tGauss" << std::endl;
     std::cout << "\tPoisson" << std::endl;
     std::cout << "\tBernoulli" << std::endl;
+    std::cout << "\tRandom" << std::endl;
 }
 
 } // namespace
@@ -70,6 +72,7 @@ int main(int argc, char* argv[]) {
     m.maximumStepsNumber(std::stoul(envLookup("LC_STEPS", "100")));
     m.approximation(distributionFromName(envLookup("LC_INIT", "Gauss")));
     m.precision(std::stod(envLookup("LC_PRECISION", "0.00000000001")));
+    m.useNFeatures(std::stoul(envLookup("LC_USE_N_FEATURES", "0")));
     m.train(p);
     std::ofstream out(modelFile);
     out << m;

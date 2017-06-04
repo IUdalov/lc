@@ -4,6 +4,7 @@
 #include <utils/utils.h>
 
 using namespace lc;
+using namespace lc::internal;
 
 BOOST_AUTO_TEST_CASE(bayes) {
     std::vector<size_t> testSpec {10, 50, 100};
